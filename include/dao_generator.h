@@ -1,5 +1,6 @@
 #pragma once
 #include <map>
+#include <set>
 #include <vector>
 
 namespace acl
@@ -161,13 +162,16 @@ namespace acl
         {
             std::string name_;
             std::list<mapper_function> mfuncs_;
+            std::set<std::string> files_;
         };
 
     public:
         dao_generator();
         void print_entries();
+        bool parse_path(const std::string &path);
         bool parse_file(const std::string &file_path);
         void gen_code(const std::string &path);
+        void gen_code_mutil_files(const std::string &path);
     private:
         void reset_lexer();
         //token lexer
@@ -229,10 +233,10 @@ namespace acl
         std::string file_path_;
         
         entry entry_;
-        std::list<entry> entries_;
+        std::vector<entry> entries_;
 
         mapper mapper_;
-        std::list<mapper> mappers_;
+        std::vector<mapper> mappers_;
 
         bool use_strreq_;
     };

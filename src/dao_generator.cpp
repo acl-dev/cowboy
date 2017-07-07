@@ -1,5 +1,6 @@
 #include <iostream>
 #include "acl_cpp/lib_acl.hpp"
+#include "lib_acl.h"
 #include "dao_generator.h"
 
 namespace acl
@@ -491,7 +492,7 @@ namespace acl
     dao_generator::entry
         dao_generator::get_entry(const std::string &name)
     {
-        std::list<entry>::iterator it = entries_.begin();
+        std::vector<entry>::iterator it = entries_.begin();
         for (; it != entries_.end(); ++it)
         {
             if (it->name_ == name)
@@ -505,7 +506,7 @@ namespace acl
     std::vector<dao_generator::field>
         dao_generator::get_fields(const std::string &name)
     {
-        std::list<entry>::iterator it = entries_.begin();
+        std::vector<entry>::iterator it = entries_.begin();
         for (; it != entries_.end(); ++it)
         {
             if (it->name_ == name)
@@ -515,7 +516,7 @@ namespace acl
     }
     bool dao_generator::check_entry(std::string &name)
     {
-        std::list<entry>::iterator it = entries_.begin();
+        std::vector<entry>::iterator it = entries_.begin();
         for (; it != entries_.end(); ++it)
         {
             if (it->name_ == name)
@@ -526,25 +527,37 @@ namespace acl
 
     bool dao_generator::parse_file(const std::string &file_path)
     {
-        reset_lexer();
-        if (!file_.open_read(file_path.c_str()))
+        try
         {
-            logger_error("open file error %s", acl::last_serror());
+            reset_lexer();
+            if (!file_.open_read(file_path.c_str()))
+            {
+                printf("open file error %s\n", acl::last_serror());
+                return false;
+            }
+            file_path_ = file_path;
+            token _token = get_next_token();
+            if (_token.type_ == token::e_comment)
+            {
+                _token = get_next_token();
+                if (_token.type_ == token::e_$models)
+                {
+                    return parse_model_file();
+                }
+                else
+                {
+                    return parse_mapper_file();
+                }
+            }
             return false;
-        }
-        file_path_ = file_path;
-        token _token = get_next_token();
-        if (_token.type_ == token::e_comment)
+
+        }catch (std::exception &e)
         {
-            _token = get_next_token();
-            if (_token.type_ == token::e_$models)
-            {
-                return parse_model_file();
-            }
-            else
-            {
-                return parse_mapper_file();
-            }
+            printf("parse file error %s\n", file_path.c_str());
+            printf("line:%d   %s   >>%s",
+                   line_num_,
+                   current_line_.c_str(),
+                   line_buffer_.c_str());
         }
         return false;
     }
@@ -669,7 +682,7 @@ namespace acl
                     f.name_ = t2.str_;
                     f.type_str_ = t1.str_;
 
-                    //set colum
+                    //set column
                     f.column_ = t2.str_;
                     if (column.size())
                     {
@@ -822,6 +835,7 @@ namespace acl
                     throw syntax_error();
 
                 param.name_ = t2.str_;
+                mapper_.files_.insert(param.entry_->filepath_);
             }
             else if (t.type_ == token::e_std_list ||
                      t.type_ == token::e_std_vector)
@@ -843,7 +857,7 @@ namespace acl
                 param.entry_ = new entry(get_entry(t2.str_));
                 param.type_str_ = t.str_;
                 param.name_ = t3.str_;
-
+                mapper_.files_.insert(param.entry_->filepath_);
             }
             params.push_back(param);
 
@@ -1232,6 +1246,7 @@ namespace acl
         return false;
     }
     #define br  std::string("\r\n")
+    #define br2  std::string("\r\n\r\n")
     #define tab std::string("\t")
     #define tab2 std::string("\t\t")
     #define tab3  std::string("\t\t\t")
@@ -1459,7 +1474,7 @@ namespace acl
         {
             code += tab + "if (!db_handle_.exec_select(query))" + br;
             code += tab + "{" + br;
-            code += tab + tab + "logger_error(\"db_.exec_update "
+            code += tab + tab + "logger_error(\"db_.exec_select "
                                         "failed :%s\",db_handle_."
                                         "get_error());" + br;
             code += tab + tab + "return false;" + br;
@@ -1820,6 +1835,7 @@ namespace acl
             "}" + br + br;
 
     }
+
     void dao_generator::gen_code(const std::string &path)
     {
         std::string declare_code;
@@ -1849,7 +1865,7 @@ namespace acl
 
         use_strreq_ = false;
 
-        std::list<mapper>::iterator it = mappers_.begin();
+        std::vector<mapper>::iterator it = mappers_.begin();
         for (; it != mappers_.end(); it++)
         {
             declare_code += gen_class_declare(*it);
@@ -1874,18 +1890,117 @@ namespace acl
 
 
         std::string buffer;
+        buffer += "#include \"acl_cpp/lib_acl.hpp\"" + br;
+        buffer += "#include \"dao.hpp\"" + br;
+        buffer += br;
+
         if (use_strreq_)
         {
-            buffer += "#include \"acl_cpp/lib_acl.hpp\"" + br;
-            buffer += "#include \"dao.hpp\"" + br;
-            buffer += br;
             buffer += gen_streq_code();
         }
-        buffer += source_code;
 
         if (source_file.write(buffer.c_str(), buffer.size()) == -1)
+        {
             printf("write file error,%s", acl::last_serror());
+            return ;
+        }
 
+        if (source_file.write(source_code.c_str(), source_code.size()) == -1)
+        {
+            printf("write file error,%s", acl::last_serror());
+            return ;
+        }
+    }
+
+    static inline std::string get_filename(const std::string &file_path)
+    {
+        size_t nps = file_path.find_last_of('/');
+        if(nps == file_path.npos)
+        {
+            nps = file_path.find_last_of('\\');
+        }
+        if(nps != file_path.npos)
+            return file_path.substr(nps + 1);
+        return file_path;
+    }
+    void dao_generator::gen_code_mutil_files(const std::string &path)
+    {
+        std::string base_path(path);
+
+        if (base_path.size())
+        {
+            char ch = base_path[base_path.size() - 1];
+            if (ch != '/' && ch != '\\')
+            {
+                base_path.push_back('/');
+            }
+        }
+
+        for (size_t i = 0; i < mappers_.size(); ++i)
+        {
+            use_strreq_ = false;
+            mapper &m = mappers_[i];
+
+            std::string header_code;
+            std::string source_code;
+            std::string header_file;
+            std::string source_file;
+            acl::ofstream file;
+
+            std::string class_name = get_class_name(m.name_);
+            header_file = base_path+class_name+".hpp";
+            source_file = base_path+class_name+".cpp";
+
+            header_code += "#pragma once" +br2;
+            header_code += gen_class_declare(m);
+
+            source_code += gen_class_implement(m);
+
+
+            if(!file.open_trunc(header_file.c_str()))
+            {
+                printf("open file error%s\n", acl::last_serror());
+                return ;
+            }
+            if(file.write(header_code.c_str(), header_code.size()) == -1)
+            {
+                printf("write file error%s\n", acl::last_serror());
+                file.close();
+                return ;
+            }
+
+            file.close();
+
+            if(!file.open_trunc(source_file.c_str()))
+            {
+                printf("open file error%s\n", acl::last_serror());
+                return ;
+            }
+            std::string code;
+            code += "#include \"acl_cpp/lib_acl.hpp\"" + br;
+            for (std::set<std::string>::iterator it = m.files_.begin();
+                    it != m.files_.end(); ++it)
+            {
+                code += "#include \"" + *it + "\""+br;
+            }
+            code += "#include \""+class_name+".h\""+br2;
+            if(use_strreq_)
+                code += gen_streq_code();
+
+            if(!file.write(code.c_str(), code.size()) == -1)
+            {
+                printf("write file error%s\n", acl::last_serror());
+                file.close();
+                return ;
+            }
+            if(!file.write(source_code.c_str(), source_code.size()) == -1)
+            {
+                printf("write file error%s\n", acl::last_serror());
+                file.close();
+                return ;
+            }
+            file.close();
+        }
     }
     void dao_generator::print_entry(const entry &_entry)
     {
@@ -1916,10 +2031,104 @@ namespace acl
     }
     void dao_generator::print_entries()
     {
-        std::list<entry>::iterator it = entries_.begin();
+        std::vector<entry>::iterator it = entries_.begin();
         for (; it != entries_.end(); ++it)
         {
             print_entry(*it);
         }
     }
+    static inline std::vector<std::string>
+    list_dir(const std::string &path, const std::string &ext_)
+    {
+        std::vector<std::string> files;
+        const char* file_path = NULL;
+
+        acl::scan_dir scan;
+        if (!scan.open(path.c_str(), false))
+        {
+            printf("scan open error %s\n",
+                         acl::last_serror());
+            return files;
+        }
+        while ((file_path = scan.next_file(true)))
+        {
+            if (ext_.size())
+            {
+                if (acl_strrncasecmp(file_path,
+                                     ext_.c_str(),
+                                     ext_.size()) == 0)
+                {
+                    files.push_back(file_path);
+                }
+            }
+            else
+            {
+                files.push_back(file_path);
+            }
+
+        }
+        return files;
+    }
+    bool dao_generator::parse_path(const std::string &path)
+    {
+        std::vector<std::string> files = list_dir(path, ".h");
+        std::vector<std::string> mapper_files;
+        std::vector<std::string> model_files;
+
+        for (size_t i = 0; i < files.size(); ++i)
+        {
+            acl::ifstream file;
+            if(!file.open_read(files[i].c_str()))
+            {
+                printf("open file error. %s\n", acl::last_serror());
+                continue;
+            }
+
+            acl::string buffer;
+            file.gets(buffer, true);
+            if(buffer.empty())
+            {
+                file.close();
+                continue;
+            }
+
+            const char * mappers = "//@Mappers";
+            const char * models = "//@Models";
+            if(acl_strrncasecmp(mappers ,
+                                buffer.c_str(),
+                                strlen(mappers)) == 0)
+            {
+                mapper_files.push_back(files[i]);
+
+            }
+            else if(acl_strrncasecmp(models ,
+                                     buffer.c_str(),
+                                     strlen(models ))== 0)
+            {
+                model_files.push_back(files[i]);
+            }
+            file.close();
+        }
+
+        for (size_t j = 0; j < model_files.size(); ++j)
+        {
+            if(!parse_file(model_files[j]))
+            {
+                printf("parse_file error %s\n", model_files[j].c_str());
+                return false;
+            }
+        }
+
+        for (size_t k = 0; k < mapper_files.size(); ++k)
+        {
+            if(!parse_file(mapper_files[k]))
+            {
+                printf("parse_file error %s\n", model_files[k].c_str());
+                return false;
+            }
+        }
+        return  true;
+    }
+
+
 }
