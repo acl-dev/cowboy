@@ -8,7 +8,7 @@ public:
 
     }
     //@Insert{insert into customer(address,postcode,sex,cname) values (:address,:postcode,:sex,:cname)}
-    virtual void insert(const customer &obj)
+    virtual bool insert(const customer &obj)
     {
         acl::query query;
         query.create_sql("insert into customer(address,postcode,sex,cname) values (:address,:postcode,:sex,:cname)");
@@ -21,20 +21,21 @@ public:
 
         if (db_.exec_update(query) == false)
         {
-            std::string error = std::string("db_.exec_update() failed.") + db_.get_error();
-            throw std::runtime_error(error);
+            logger_error("db_.exec_update() failed. %s", db_.get_error());
+            return false;
         }
             
 
         if (db_.commit() == false)
         {
-            std::string error = std::string("db_.commit() failed.") + db_.get_error();
-            throw std::runtime_error(error);
+            logger_error("db_.commit() failed. %s", db_.get_error());
+            return false;
         }
+        return true;
     }
 
     //@Delete{delete from customer where id=:id}
-    virtual void delete_by_id(int id)
+    virtual bool delete_by_id(int id)
     {
         acl::query query;
         query.create_sql("delete from customer where id=:id");
@@ -42,19 +43,20 @@ public:
 
         if (db_.exec_update(query) == false)
         {
-            std::string error = std::string("db_.exec_update() failed.") + db_.get_error();
-            throw std::runtime_error(error);
+            logger_error("db_.exec_update() failed. %s", db_.get_error());
+            return false;
         }
 
         if (db_.commit() == false)
         {
-            std::string error = std::string("db_.commit() failed.") + db_.get_error();
-            throw std::runtime_error(error);
+            logger_error("db_.commit() failed. %s", db_.get_error());
+            return false;
         }
+        return true;
     }
 
     //@Update("update customer set address=:address,postcode=:postcode,sex=:sex,cname=:cname where id=:id")
-    virtual void update(const customer &obj)
+    virtual bool  update(const customer &obj)
     {
         acl::query query;
 
@@ -68,19 +70,20 @@ public:
 
         if (db_.exec_update(query) == false)
         {
-            std::string error = std::string("db_.exec_update() failed.") + db_.get_error();
-            throw std::runtime_error(error);
+            logger_error("db_.exec_update() failed. %s", db_.get_error());
+            return false;
         }
 
         if (db_.commit() == false)
         {
-            std::string error = std::string("db_.commit() failed.") + db_.get_error();
-            throw std::runtime_error(error);
+            logger_error("db_.commit() failed. %s", db_.get_error());
+            return false;
         }
+        return true;
     }
 
     //@Select{select * from customer where id=:id}
-    virtual customer select_by_id(int id)
+    virtual bool select_by_id(customer  &obj, int id)
     {
         acl::query query;
         query.create_sql("select * from customer where id=:id");
@@ -90,11 +93,9 @@ public:
 
         if (db_.exec_select(query) == false)
         {
-            std::string error = std::string("db_.exec_select() failed.") + db_.get_error();
-            throw std::runtime_error(error);
+            logger_error("db_.exec_select() failed. %s", db_.get_error());
+            return false;
         }
-
-        customer obj;
 
         if(db_.length())
         {
@@ -116,7 +117,7 @@ public:
             if (id)
                 obj.id = atoi(id);
         }
-        return obj;
+        return true;
     }
 
 private:
@@ -133,7 +134,7 @@ public:
 
     }
     //@Insert{insert into orders(code,customer_id) values (:code,:customer_id)}
-    virtual void insert(const orders &obj)
+    virtual bool insert(const orders &obj)
     {
         acl::query query;
         query.create_sql("insert into orders(code,customer_id)values(:code,:customer_id)");
@@ -144,19 +145,20 @@ public:
 
         if (db_.exec_update(query) == false)
         {
-            std::string error = std::string("db_.exec_update() failed.") + db_.get_error();
-            throw std::runtime_error(error);
+            logger_error("db_.exec_update() failed. %s", db_.get_error());
+            return false;
         }
 
         if (db_.commit() == false)
         {
-            std::string error = std::string("db_.commit() failed.") + db_.get_error();
-            throw std::runtime_error(error);
+            logger_error("db_.commit() failed. %s", db_.get_error());
+            return false;
         }
+        return true;
     }
 
     //@Delete{delete from order where id=:id}
-    virtual void delete_by_id(int id)
+    virtual bool delete_by_id(int id)
     {
         acl::query query;
         query.create_sql("delete from order where id=:id");
@@ -164,19 +166,20 @@ public:
 
         if (db_.exec_update(query) == false)
         {
-            std::string error = std::string("db_.exec_update() failed.") + db_.get_error();
-            throw std::runtime_error(error);
+            logger_error("db_.exec_update() failed. %s", db_.get_error());
+            return false;
         }
 
         if (db_.commit() == false)
         {
-            std::string error = std::string("db_.commit() failed.") + db_.get_error();
-            throw std::runtime_error(error);
+            logger_error("db_.exec_update() failed. %s", db_.get_error());
+            return false;
         }
+        return true;
     }
 
     //@Update{update order set code=:code,customer_id=:customer_id where id=:id}
-    virtual void update(const orders &obj)
+    virtual bool update(const orders &obj)
     {
         acl::query query;
 
@@ -189,19 +192,19 @@ public:
 
         if (db_.exec_update(query) == false)
         {
-            std::string error = std::string("db_.exec_update() failed.") + db_.get_error();
-            throw std::runtime_error(error);
+            logger_error("db_.exec_update() failed. %s", db_.get_error());
+            return false;
         }
 
         if (db_.commit() == false)
         {
-            std::string error = std::string("db_.commit() failed.") + db_.get_error();
-            throw std::runtime_error(error);
+            logger_error("db_.commit() failed. %s", db_.get_error());
+            return false;
         }
     }
 
     //@Select{select * from order where id=:id}
-    virtual orders select_by_id(int id)
+    virtual bool select_by_id(orders &obj ,int id)
     {
         acl::query query;
         query.create_sql("select * from customer where id=:id");
@@ -211,12 +214,9 @@ public:
 
         if (db_.exec_select(query) == false)
         {
-            std::string error = std::string("db_.exec_select() failed.") + db_.get_error();
-            throw std::runtime_error(error);
+            logger_error("db_.exec_select() failed. %s", db_.get_error());
+            return false;
         }
-
-        orders obj;
-
         if (db_.length())
         {
             const acl::db_row* row = db_[0];
@@ -231,13 +231,13 @@ public:
             if (id)
                 obj.id = atoi(id);
         }
-        return obj;
+        return true;
     }
 private:
     acl::db_handle& db_;
 };
 
-class customer_order_dao
+class customer_order_dao:public customer_order_mapper
 {
 
 public:
@@ -247,9 +247,9 @@ public:
 
     }
     //@Select{select c.id as cid,c.address,c.postcode,c.sex,c.cname,o.id as od,o.code,o.customer_id from customer c, order o where c.id=:id and o.customer_id=c.id}
-    //@Result column="cid" property="customer_order.id"
+    //@Result column="cid" property="id"
     //@Result column="oid" property="order.id"
-    virtual customer_order  get_customer_order(int id)
+    virtual bool get_customer_order(customer_order  &obj, int id)
     {
         acl::query query;
         query.create_sql("select c.id as cid,c.address,c.postcode,c.sex,c.cname,o.id as oid,o.code,o.customer_id from customer c, orders o where c.id=:id and o.customer_id=c.id");
@@ -259,15 +259,11 @@ public:
 
         if (db_.exec_select(query) == false)
         {
-            std::string error = std::string("db_.exec_select() failed.") + db_.get_error();
-            throw std::runtime_error(error);
+            logger_error("db_.exec_select() failed. %s", db_.get_error());
+            return false;
         }
-
-        customer_order obj;
-
-         for (size_t i = 0; i < db_.length(); ++i)
+        for (size_t i = 0; i < db_.length(); ++i)
         {
-            orders o;
             const acl::db_row* row = db_[i];
 
             const char* address  = (*row)["address"];
@@ -291,6 +287,8 @@ public:
             if (cid)
                 obj.id = atoi(cid);
 
+            orders o;
+
             if (code)
                 o.code = code;
             if (oid)
@@ -299,13 +297,13 @@ public:
                 o.customer_id = atoi(customer_id);
             obj.orders.push_back(o);
         }
-        return obj;
+        return !!db_.length();
     }
 
     //@Select{select c.id as cid,c.address,c.postcode,c.sex,c.cname,o.id as oid,o.code,o.customer_id from customer c, orders o where  o.customer_id=c.id}
-    //@Result column="cid" property="customer_order.id"
+    //@Result column="cid" property="id"
     //@Result column="oid" property="order.id"
-    virtual std::list<customer_order> get_customer_orders()
+    virtual bool get_customer_orders(std::list<customer_order> &obj)
     {
         acl::query query;
         query.create_sql("select c.id as cid,c.address,c.postcode,c.sex,c.cname,o.id as oid,o.code,o.customer_id from customer c, orders o where  o.customer_id=c.id");
@@ -314,11 +312,9 @@ public:
 
         if (db_.exec_select(query) == false)
         {
-            std::string error = std::string("db_.exec_select() failed.") + db_.get_error();
-            throw std::runtime_error(error);
+            logger_error("db_.exec_select() failed. %s", db_.get_error());
+            return false;
         }
-
-        std::list<customer_order> obj;
 
         for (size_t i = 0; i < db_.length(); ++i)
         {
@@ -354,16 +350,15 @@ public:
                 const char* code        = (*row1)["code"];
                 const char* customer_id = (*row1)["customer_id"];
                 const char* oid         = (*row1)["oid"];
-                const char* cid2        = (*row1)["cid"];
 
-                const char* cid1        = (*row1)["cid"];
-                const char* address1    = (*row1)["address"];
+                const char* cid         = (*row1)["cid"];
+                const char* $address1    = (*row1)["address"];
                 const char* postcode1   = (*row1)["postcode"];
                 const char* sex1        = (*row1)["sex"];
                 const char* cname1      = (*row1)["cname"];
 
-                if (!streq(cid1, cid) ||
-                    !streq(address1, address) ||
+                if (!streq(cid, cid) ||
+                    !streq($address1, address) ||
                     !streq(postcode1, postcode) ||
                     !streq(sex1, sex) ||
                     !streq(cname1, cname))
@@ -385,7 +380,7 @@ public:
             }
             obj.push_back(customer_order_obj);
         }
-        return obj;
+        return !!db_.length();
     }
 private:
 
@@ -403,7 +398,7 @@ public:
     //@Select{select c.id as cid,c.address,c.postcode,c.sex,c.cname,o.id as oid,o.code,o.customer_id from customer c, orders o where o.id=:id and o.customer_id = c.id}
     //@Result column="cid" property="customer.id"
     //@Result column="oid" property="id"
-    virtual order_customer get_order_customer(int id)
+    virtual bool get_order_customer(order_customer &obj, int id)
     {
         acl::query query;
         query.create_sql("select c.id as cid,c.address,c.postcode,c.sex,c.cname,o.id as oid,o.code,o.customer_id from customer c, orders o where o.id=:id and o.customer_id = c.id");
@@ -413,11 +408,9 @@ public:
 
         if (db_.exec_select(query) == false)
         {
-            std::string error = std::string("db_.exec_select() failed.") + db_.get_error();
-            throw std::runtime_error(error);
+            logger_error("db_.exec_select() failed. %s", db_.get_error());
+            return false;
         }
-
-        order_customer obj;
 
         if(db_.length())
         {
@@ -451,13 +444,13 @@ public:
             if (customer_id)
                 obj.customer_id = atoi(customer_id);
         }
-        return obj;
+        return !!db_.length();
     }
 
     //@Select{select c.id as cid,c.address,c.postcode,c.sex,c.cname,o.id as oid,o.code,o.customer_id from customer c, orders o where o.customer_id = c.id}
     //@Result column="cid" property="customer_order.id"
     //@Result column="oid" property="order.id"
-    virtual std::list<order_customer> get_order_customers()
+    virtual bool get_order_customers(std::list<order_customer> &result)
     {
         acl::query query;
 
@@ -465,11 +458,9 @@ public:
         logger("%s", query.to_string().c_str());
         if (db_.exec_select(query) == false)
         {
-            std::string error = std::string("db_.exec_select() failed.") + db_.get_error();
-            throw std::runtime_error(error);
+            logger_error("db_.exec_select() failed. %s", db_.get_error());
+            return false;
         }
-
-        std::list<order_customer> order_customer_list;
 
         for(size_t i = 0; i < db_.length(); i++)
         {
@@ -504,9 +495,9 @@ public:
             if (customer_id)
                 obj.customer_id = atoi(customer_id);
 
-            order_customer_list.push_back(obj);
+            result.push_back(obj);
         }
-        return order_customer_list;
+        return !!db_.length();
     }
 private:
     acl::db_handle& db_;

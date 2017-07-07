@@ -36,30 +36,34 @@ void order_mapper_dao_insert(acl::db_mysql &db)
 void customer_mapper_dao_select(acl::db_mysql &db)
 {
     customer_dao dao(db);
-    customer _customer = dao.select_by_id(1);
+    customer obj;
+    dao.select_by_id(obj,1);
 }
 
 void customer_order_dao_test(acl::db_mysql &db)
 {
     customer_order_dao dao(db);
-
-    customer_order o = dao.get_customer_order(1);
+    customer_order o;
+    dao.get_customer_order(o, 1);
 }
 
 void get_customer_orders_test(acl::db_mysql &db)
 {
     customer_order_dao dao(db);
 
-    std::list<customer_order> list = dao.get_customer_orders();
+    std::list<customer_order> list;
+    dao.get_customer_orders(list);
 }
 
 void order_customer_dao_test(acl::db_mysql &db)
 {
     order_customer_dao dao(db);
 
-    order_customer o = dao.get_order_customer(1);
+    order_customer o;
+    dao.get_order_customer(o, 1);
 
-    std::list<order_customer> list = dao.get_order_customers();
+    std::list<order_customer> list;
+    dao.get_order_customers(list);
 }
 
 int db_test(void)
@@ -98,11 +102,9 @@ int main()
 
     gen.print_entries();
 
-    gen.parse_file("F:\\fork\\acl-dev\\orm\\samples\\demo\\mapper.hpp");
+    gen.parse_file("F:\\fork\\acl-dev\\dao_generator\\samples\\demo\\mapper.hpp");
 
     gen.gen_code("");
-    
-    getchar();
     
     return 0;
 }

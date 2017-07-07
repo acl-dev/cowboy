@@ -49,6 +49,7 @@ namespace acl
                 e_namespace,        // namespace
                 e_const,            // const
                 e_int,              // int
+                e_bool,             // bool
                 e_float,            // float
                 e_double,           // double
                 e_time,             // time_t
@@ -79,11 +80,17 @@ namespace acl
                 e_$result,          // @Result
             }type_;
         };
+        struct entry;
         struct field
         {
+            field():
+                entry_(NULL)
+            {
+            }
             typedef enum
             {
                 e_void,
+                e_bool,
                 e_int,     // int
                 e_float,   // float
                 e_double,  // double
@@ -102,7 +109,7 @@ namespace acl
             std::string column_;
 
             //to_one ,to_many 
-            std::string to_name_;
+            entry* entry_;
         };
 
         struct entry
@@ -135,6 +142,8 @@ namespace acl
             {
                 std::string column_;
                 std::string property_;
+                std::string str_;
+                int line_;
             };
 
             type_t type_;
@@ -142,9 +151,11 @@ namespace acl
             std::string declare_;
             std::string name_;
             //column :property            
-            std::list<result> columns_;
-            std::list<field> params_;
+            std::vector<result> columns_;
+            std::vector<field> params_;
+            std::vector<std::string> sql_params_;
             field return_;
+            bool log_;
         };
 
         struct mapper
@@ -179,25 +190,34 @@ namespace acl
         void parse_include();
         void parse_model_struct();
         void parse_construct_func();
-        void parse_function(const std::vector<token> &tokens);
 
         bool parse_mapper_file();
         void parse_mapper_struct();
         field get_mappper_func_return();
-        std::list<field> get_mapper_func_params();
-        std::list<mapper_function::result> get_result_columns();
+        std::vector<field> get_mapper_func_params();
+        std::vector<std::string> get_sql_param();
+
+        void update_mapper_function_columns(mapper_function &func);
+        std::vector<mapper_function::result> get_result_columns();
 
         std::string gen_class_implememt(const mapper &m);
+        std::string gen_query_set_parameters(const mapper_function &func);
+        std::string get_assign_code(const field &f, const std::string &str);
+        std::string gen_func_implememt(const mapper_function &func);
         std::string get_class_name(const std::string &parent_name);
         std::string gen_class_declare(const mapper &m);
-        std::string gen_annotation(const mapper_function &func);
+        std::string gen_annotation(const mapper_function &func,bool tab = true);
+        std::string gen_func_impl_name(const std::string &class_name, const std::string &declare_);
+        std::string gen_streq_code()const;
+
     private:
         int to_field_type(int type);
         void print_entry(const entry &_entry);
         
         void entry_reset();
         bool check_entry(std::string &name);
-        std::vector<field> get_field_from_parent(std::string &name);
+        std::vector<field> get_fields(const std::string &name);
+        entry get_entry(const std::string &name);
     private:
         int line_num_;
         std::string token_buf_;
@@ -214,5 +234,7 @@ namespace acl
 
         mapper mapper_;
         std::list<mapper> mappers_;
+
+        bool use_strreq_;
     };
 }
