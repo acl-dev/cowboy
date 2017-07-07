@@ -414,7 +414,7 @@ namespace acl
     void dao_generator::skip(std::string &line,
                              const std::string &delims)
     {
-        int offset = 0;
+        size_t offset = 0;
 
         if (line.empty())
             return;
@@ -681,7 +681,8 @@ namespace acl
                 }
                 throw syntax_error();
             }
-            else if (t1.type_ == token::e_std_list || t1.type_ == token::e_std_vector)
+            else if (t1.type_ == token::e_std_list ||
+                    t1.type_ == token::e_std_vector)
             {
                 // <
                 t2 = get_next_token();
@@ -738,7 +739,7 @@ namespace acl
                 if (!check_entry(t1.str_))
                     throw syntax_error(std::string("can't find ") + t1.str_);
 
-                token t2 = get_next_token();
+                t2 = get_next_token();
                 if (t2.type_ != token::e_identifier)
                     throw syntax_error();
                 f.type_ = field::e_entry;
@@ -960,8 +961,11 @@ namespace acl
             }
             else
             {
-                std::string first = property.substr(0, property.find_first_of('.'));
-                std::string second = property.substr(property.find_first_of('.') + 1);
+                std::string first = property
+                        .substr(0, property.find_first_of('.'));
+
+                std::string second = property
+                        .substr(property.find_first_of('.') + 1);
                 bool found = false;
 
                 for (size_t j = 0; j < fields.size(); j++)
@@ -969,7 +973,8 @@ namespace acl
                     field &f = fields[j];
                     if (f.name_ == first)
                     {
-                        if (f.type_ != field::e_vector && f.type_ != field::e_entry)
+                        if (f.type_ != field::e_vector &&
+                                f.type_ != field::e_entry)
                             throw syntax_error();
 
                         for (size_t k = 0; k < f.entry_->fields_.size(); k++)
@@ -987,8 +992,8 @@ namespace acl
                 {
                     acl::string error;
                     error.format("%s line:%d error.not match",
-                                 func.columns_[i].line_,
-                                 func.columns_[i].str_.c_str());
+                                 func.columns_[i].str_.c_str(),
+                                 func.columns_[i].line_);
                     throw syntax_error(error.c_str());
                 }
             }
@@ -1080,7 +1085,8 @@ namespace acl
 
                 if (get_next_token().type_ != token::e_open_curly_brace)
                     throw syntax_error();
-                mfunc.sql_ = line_buffer_.substr(0, line_buffer_.find_last_of('}'));
+                mfunc.sql_ = line_buffer_.
+                        substr(0,line_buffer_.find_last_of('}'));
                 mfunc.sql_params_ = get_sql_param();
 
                 token t2 = get_next_token();
@@ -1113,7 +1119,8 @@ namespace acl
                 if (mfunc.type_ == mapper_function::e_select)
                 {
                     if (mfunc.params_.empty())
-                        throw syntax_error("{select} type function params must not empty");
+                        throw syntax_error("{select} type function params "
+                                                   "must not empty");
                 }
                 update_mapper_function_columns(mfunc);
                 t = get_next_token();
@@ -1245,8 +1252,9 @@ namespace acl
 
         return class_name.c_str();
     }
-    std::string dao_generator::gen_func_impl_name(const std::string &class_name,
-                                                  const std::string &declare_)
+    std::string dao_generator::gen_func_impl_name(
+            const std::string &class_name,
+            const std::string &declare_)
     {
         std::string code = declare_;
         skip_space(code);
@@ -1274,7 +1282,8 @@ namespace acl
         throw syntax_error("error");
         return std::string();
     }
-    std::string dao_generator::gen_annotation(const mapper_function &func, bool tab_)
+    std::string dao_generator::gen_annotation(
+            const mapper_function &func, bool tab_)
     {
         std::string code;
         if (tab_)
@@ -1296,6 +1305,7 @@ namespace acl
         {
             if (tab_)
                 code += tab;
+
             code += "//@Result{column=" + func.columns_[i].column_;
             code += ", property=" + func.columns_[i].property_ + "}" + br;
         }
@@ -1334,7 +1344,8 @@ namespace acl
 
         return code;
     }
-    std::string dao_generator::gen_query_set_parameters(const mapper_function &func)
+    std::string dao_generator::gen_query_set_parameters(
+            const mapper_function &func)
     {
         std::string code;
         if (func.sql_params_.empty())
@@ -1359,9 +1370,9 @@ namespace acl
                 {
                     std::vector<field> fileds = f.entry_->fields_;
 
-                    for (size_t i = 0; i < fileds.size(); i++)
+                    for (size_t k = 0; k < fileds.size(); k++)
                     {
-                        field &f2 = fileds[i];
+                        field &f2 = fileds[k];
                         if (f2.column_ == param)
                         {
                             code += f.name_ + "." + f2.column_;
@@ -1395,7 +1406,8 @@ namespace acl
         }
         return code;
     }
-    std::string dao_generator::get_assign_code(const field &f, const std::string &str)
+    std::string dao_generator::get_assign_code(const field &f,
+                                               const std::string &str)
     {
         if (f.type_ == field::e_int)
         {
@@ -1404,7 +1416,8 @@ namespace acl
         return str;
     }
 
-    std::string dao_generator::gen_func_implememt(const mapper_function &func)
+    std::string dao_generator::gen_func_implement(
+            const mapper_function &func)
     {
         std::string code;
 
@@ -1416,7 +1429,8 @@ namespace acl
 
         if (func.log_)
         {
-            code += tab + "logger(\"sql: %s\", query.to_string().c_str());" + br;
+            code += tab + "logger(\"sql: %s\", "
+                                  "query.to_string().c_str());" + br;
             code += br;
         }
 
@@ -1424,15 +1438,17 @@ namespace acl
             func.type_ == mapper_function::e_insert ||
             func.type_ == mapper_function::e_update)
         {
-            code += tab + "if (db_handle_.exec_update(query) == false)" + br;
+            code += tab + "if (!db_handle_.exec_update(query))" + br;
             code += tab + "{" + br;
-            code += tab + tab + "logger_error(\"db_.exec_update failed :%s\",db_handle_.get_error());" + br;
+            code += tab + tab + "logger_error(\"db_.exec_update failed :%s\","
+                                        "db_handle_.get_error());" + br;
             code += tab + tab + "return false;" + br;
             code += tab + "}" + br;
 
-            code += tab + "if (db_handle_.commit() == false)" + br;
+            code += tab + "if (!db_handle_.commit())" + br;
             code += tab + "{" + br;
-            code += tab + tab + "logger_error(\"db_.commit failed :%s\",db_handle_.get_error());" + br;
+            code += tab + tab + "logger_error(\"db_.commit failed :%s\","
+                                        "db_handle_.get_error());" + br;
             code += tab + tab + "return false;" + br;
             code += tab + "}" + br;
 
@@ -1441,21 +1457,26 @@ namespace acl
         }
         else if (func.type_ == mapper_function::e_select)
         {
-            code += tab + "if (db_handle_.exec_select(query) == false)" + br;
+            code += tab + "if (!db_handle_.exec_select(query))" + br;
             code += tab + "{" + br;
-            code += tab + tab + "logger_error(\"db_.exec_update failed :%s\",db_handle_.get_error());" + br;
+            code += tab + tab + "logger_error(\"db_.exec_update "
+                                        "failed :%s\",db_handle_."
+                                        "get_error());" + br;
             code += tab + tab + "return false;" + br;
             code += tab + "}" + br;
             code += br;
 
             if (func.params_.front().type_ == field::e_entry)
             {
-                code += tab + "for (size_t i = 0; i < db_handle_.length(); ++i)" + br;
+                code += tab + "for (size_t i = 0; i < "
+                                      "db_handle_.length(); ++i)" + br;
                 code += tab + "{" + br;
 
-                code += tab + tab + "const acl::db_row* row = db_handle_[i];" + br + br;
+                code += tab + tab + "const acl::db_row* row = d"
+                                            "b_handle_[i];" + br + br;
 
-                std::vector<field> &fields = func.params_[0].entry_->fields_;
+                std::vector<field> &fields = func.
+                        params_[0].entry_->fields_;
 
                 std::string arg = func.params_[0].name_;
 
@@ -1463,19 +1484,24 @@ namespace acl
                 for (size_t i = 0; i < fields.size(); i++)
                 {
                     field &f = fields[i];
-                    if (f.type_ == field::e_entry || f.type_ == field::e_vector)
+                    if (f.type_ == field::e_entry ||
+                            f.type_ == field::e_vector)
                     {
                         std::vector<field> &fields2 = f.entry_->fields_;
                         code += br;
-                        for (size_t i = 0; i < fields2.size(); i++)
+                        for (size_t j = 0; j < fields2.size(); j++)
                         {
-                            field &f2 = fields2[i];
-                            code += tab + tab + "const char* " + "$$" + f2.column_ + " = (*row)[\"" + f2.column_ + "\"];" + br;
+                            field &f2 = fields2[j];
+                            code += tab + tab + "const char* " + "$$" +
+                                    f2.column_ + " = (*row)[\"" +
+                                    f2.column_ + "\"];" + br;
                         }
                     }
                     else
                     {
-                        code += tab + tab + "const char* " + "$" + f.column_ + " = (*row)[\"" + f.column_ + "\"];" + br;
+                        code += tab + tab + "const char* " + "$" +
+                                f.column_ + " = (*row)[\"" +
+                                f.column_ + "\"];" + br;
                     }
                 }
 
@@ -1485,11 +1511,15 @@ namespace acl
                 for (size_t i = 0; i < fields.size(); i++)
                 {
                     field &f = fields[i];
-                    if (f.type_ != field::e_entry && f.type_ != field::e_vector)
+                    if (f.type_ != field::e_entry &&
+                            f.type_ != field::e_vector)
                     {
-                        code += tab + tab + "if(" + "$" + f.column_ + ")" + br;
-                        code += tab + tab + tab + arg + "." + f.name_ + " = ";
-                        code += get_assign_code(f, "$" + f.column_) + br;
+                        code += tab + tab + "if(" + "$" +
+                                f.column_ + ")" + br;
+                        code += tab + tab + tab + arg +
+                                "." + f.name_ + " = ";
+                        code += get_assign_code(f, "$" +
+                                f.column_) + br;
                     }
                 }
 
@@ -1500,12 +1530,15 @@ namespace acl
                     {
                         std::vector<field> &fields2 = f.entry_->fields_;
                         code += br;
-                        for (size_t i = 0; i < fields2.size(); i++)
+                        for (size_t j = 0; j < fields2.size(); j++)
                         {
-                            field &child = fields2[i];
-                            code += tab + tab + "if($$" + child.column_ + ")" + br;
-                            code += tab + tab + tab + arg + "." + f.name_ + "." + child.name_ + " = ";
-                            code += get_assign_code(child, "$$" + child.column_) + br;
+                            field &child = fields2[j];
+                            code += tab + tab + "if($$" +
+                                    child.column_ + ")" + br;
+                            code += tab + tab + tab + arg + "." +
+                                    f.name_ + "." + child.name_ + " = ";
+                            code += get_assign_code(child, "$$" +
+                                    child.column_) + br;
                         }
                     }
                 }
@@ -1516,19 +1549,24 @@ namespace acl
                     if (f.type_ == field::e_vector)
                     {
                         code += br;
-                        code += tab + tab + f.entry_->name_ + " $_obj;" + br;
+                        code += tab + tab + f.entry_->name_ +
+                                " $_obj;" + br;
 
                         std::vector<field> &fields2 = f.entry_->fields_;
 
-                        for (size_t i = 0; i < fields2.size(); i++)
+                        for (size_t j = 0; j < fields2.size(); j++)
                         {
-                            field &child = fields2[i];
-                            code += tab + tab + "if($$" + child.column_ + ")" + br;
-                            code += tab + tab + tab + "$_obj." + child.name_ + " = ";
-                            code += get_assign_code(child, "$$" + child.column_) + br;
+                            field &child = fields2[j];
+                            code += tab + tab + "if($$" +
+                                    child.column_ + ")" + br;
+                            code += tab + tab + tab + "$_obj." +
+                                    child.name_ + " = ";
+                            code += get_assign_code(child, "$$" +
+                                    child.column_) + br;
                         }
 
-                        code += tab + tab + arg + "." + f.name_ + ".push_back($_obj);" + br;
+                        code += tab + tab + arg + "." + f.name_ +
+                                ".push_back($_obj);" + br;
                     }
                 }
 
@@ -1539,20 +1577,28 @@ namespace acl
             {
                 std::string obj = "$item";
 
-                code += tab + "for (size_t i = 0; i < db_handle_.length(); ++i)" + br;
+                code += tab + "for (size_t i = 0; i < "
+                                      "db_handle_.length(); ++i)" + br;
                 code += tab + "{" + br;
-                code += tab + tab + func.params_.front().entry_->name_ + " " + obj + br;
-                code += tab + tab + "const acl::db_row* row = db_handle_[i];" + br + br;
+                code += tab + tab + func.params_.front().entry_->name_ +
+                        " " + obj + br;
+                code += tab + tab + "const acl::db_row* row "
+                                            "= db_handle_[i];" +
+                        br + br;
 
-                std::vector<field> &fields = func.params_[0].entry_->fields_;
+                std::vector<field> &fields = func.
+                        params_[0].entry_->fields_;
 
                 //const char* cid      = (*row)["cid"];
                 for (size_t i = 0; i < fields.size(); i++)
                 {
                     field &f = fields[i];
-                    if (!(f.type_ == field::e_entry || f.type_ == field::e_vector))
+                    if (!(f.type_ == field::e_entry ||
+                            f.type_ == field::e_vector))
                     {
-                        code += tab + tab + "const char* " + "$" + f.column_ + " = (*row)[\"" + f.column_ + "\"];" + br;
+                        code += tab + tab + "const char* " + "$" +
+                                f.column_ + " = (*row)[\"" +
+                                f.column_ + "\"];" + br;
                     }
                 }
 
@@ -1566,10 +1612,13 @@ namespace acl
                     {
                         std::vector<field> &fields2 = f.entry_->fields_;
                         code += br;
-                        for (size_t i = 0; i < fields2.size(); i++)
+                        for (size_t j = 0; j < fields2.size(); j++)
                         {
-                            field &f2 = fields2[i];
-                            code += tab + tab + "const char* " + "$$" + f2.column_ + " = (*row)[\"" + f2.column_ + "\"];" + br;
+                            field &f2 = fields2[j];
+                            code += tab + tab + "const char* " +
+                                    "$$" + f2.column_ +
+                                    " = (*row)[\"" +
+                                    f2.column_ + "\"];" + br;
                         }
                     }
                 }
@@ -1580,10 +1629,13 @@ namespace acl
                 for (size_t i = 0; i < fields.size(); i++)
                 {
                     field &f = fields[i];
-                    if (f.type_ != field::e_entry && f.type_ != field::e_vector)
+                    if (f.type_ != field::e_entry &&
+                            f.type_ != field::e_vector)
                     {
-                        code += tab + tab + "if(" + "$" + f.column_ + ")" + br;
-                        code += tab + tab + tab + obj + "." + f.name_ + " = ";
+                        code += tab + tab +
+                                "if(" + "$" + f.column_ + ")" + br;
+                        code += tab + tab + tab +
+                                obj + "." + f.name_ + " = ";
                         code += get_assign_code(f, "$" + f.column_) + br;
                     }
                 }
@@ -1595,12 +1647,16 @@ namespace acl
                     {
                         std::vector<field> &fields2 = f.entry_->fields_;
                         code += br;
-                        for (size_t i = 0; i < fields2.size(); i++)
+                        for (size_t l = 0; l < fields2.size(); l++)
                         {
-                            field &child = fields2[i];
-                            code += tab + tab + "if($$" + child.column_ + ")" + br;
-                            code += tab + tab + tab + obj + "." + f.name_ + "." + child.name_ + " = ";
-                            code += get_assign_code(child, "$$" + child.column_) + br;
+                            field &child = fields2[l];
+                            code += tab + tab + "if($$" +
+                                    child.column_ + ")" + br;
+                            code += tab + tab + tab + obj +
+                                    "." + f.name_ + "." +
+                                    child.name_ + " = ";
+                            code += get_assign_code(child, "$$" +
+                                    child.column_) + br;
                         }
                     }
                 }
@@ -1612,26 +1668,35 @@ namespace acl
                     if (f.type_ == field::e_vector)
                     {
                         code += br;
-                        code += tab + tab + "for (; i< db_.length(); i++)" + br;
+                        code += tab + tab +
+                                "for (; i< db_.length(); i++)" + br;
                         code += tab + tab + "{" + br;
                         std::string item = f.entry_->name_ + "_item";
-                        code += tab + tab + tab + f.entry_->name_ + " " + item;
+                        code += tab + tab + tab +
+                                f.entry_->name_ + " " + item;
                         std::vector<field> &fields2 = f.entry_->fields_;
                         code += br;
 
-                        for (size_t i = 0; i < fields2.size(); i++)
+                        for (size_t k = 0; k < fields2.size(); k++)
                         {
-                            field &f2 = fields2[i];
-                            code += tab + tab + tab + "const char* " + "$$" + f2.column_ + " = (*row)[\"" + f2.column_ + "\"];" + br;
+                            field &f2 = fields2[k];
+                            code += tab + tab + tab + "const char* " +
+                                    "$$" + f2.column_ +
+                                    " = (*row)[\"" + f2.column_ + "\"];" + br;
                         }
                         code += br;
 
-                        for (size_t i = 0; i < fields.size(); i++)
+                        for (size_t ii = 0; ii < fields.size(); ii++)
                         {
-                            field &f = fields[i];
-                            if (!(f.type_ == field::e_entry || f.type_ == field::e_vector))
+                            field &child = fields[ii];
+                            if (!(child.type_ == field::e_entry ||
+                                    child.type_ == field::e_vector))
                             {
-                                code += tab + tab + tab + "const char* " + "$$$" + f.column_ + " = (*row)[\"" + f.column_ + "\"];" + br;
+                                code += tab + tab + tab +
+                                        "const char* " +
+                                        "$$$" + child.column_ +
+                                        " = (*row)[\"" +
+                                        child.column_ + "\"];" + br;
                             }
                         }
                         code += br;
@@ -1648,15 +1713,18 @@ namespace acl
                         */
                         code += tab3 + "if (";
 
-                        for (size_t i = 0; i < fields.size(); i++)
+                        for (size_t j = 0; j < fields.size(); j++)
                         {
-                            field &f = fields[i];
-                            if (!(f.type_ == field::e_entry || f.type_ == field::e_vector))
+                            field &child = fields[j];
+                            if (!(child.type_ == field::e_entry ||
+                                    child.type_ == field::e_vector))
                             {
-                                if (i != 0)
+                                if (j != 0)
                                     code += tab4;
-                                code += "!streq($$$" + f.column_ + ", $" + f.column_ + ")";
-                                if (i == fields.size() - 2)
+                                code += "!streq($$$" + child.column_ + ", $" +
+                                        child.column_ + ")";
+
+                                if (j == fields.size() - 2)
                                     code += ")" + br;
                                 else
                                     code += " ||" + br;
@@ -1686,7 +1754,8 @@ namespace acl
                             code += get_assign_code(f2, "$$" + f2.column_) + br;
                         }
                         code += br;
-                        code += tab3 + func.params_.front().name_ + "." + f.name_ + ".push_back(" + item + ");" + br;
+                        code += tab3 + func.params_.front().name_ + "." +
+                                f.name_ + ".push_back(" + item + ");" + br;
 
                         code += br;
                         code += tab + tab + "}" + br;
@@ -1696,7 +1765,8 @@ namespace acl
 
                 code += br;
 
-                code += tab + tab + func.params_.front().name_ + ".push_back(" + obj + ");" + br;
+                code += tab + tab + func.params_.front().name_+
+                        ".push_back(" + obj + ");" + br;
 
                 code += tab + "}" + br;
                 code += tab + "return !!db_handle_.length();" + br;
@@ -1705,12 +1775,15 @@ namespace acl
 
         return code;
     }
-    std::string dao_generator::gen_class_implememt(const mapper &m)
+    //implement
+    std::string dao_generator::gen_class_implement(const mapper &m)
     {
         std::string code;
         std::string class_name = get_class_name(m.name_);
 
-        code += class_name + "::" + class_name + "(acl::db_handle& handle)" + br;
+        code += class_name + "::" + class_name +
+                "(acl::db_handle& handle)" + br;
+
         code += tab + ":db_handle_(handle)" + br;
         code += "{" + br;
         code += "}";
@@ -1726,7 +1799,7 @@ namespace acl
             code += br;
             code += "{";
             code += br;
-            code += gen_func_implememt(*it);
+            code += gen_func_implement(*it);
             code += "}";
             code += br;
             code += br;
@@ -1736,7 +1809,8 @@ namespace acl
     }
     std::string dao_generator::gen_streq_code()const
     {
-            return "static inline bool streq(const char *left, const char *right)" + br +
+            return "static inline bool streq(const char *left, "
+                           "const char *right)" + br +
             "{" + br +
             tab + "if (!left && !right)" + br +
             tab + tab + "return true;" + br +
@@ -1779,7 +1853,7 @@ namespace acl
         for (; it != mappers_.end(); it++)
         {
             declare_code += gen_class_declare(*it);
-            source_code += gen_class_implememt(*it);
+            source_code += gen_class_implement(*it);
         }
 
 
@@ -1794,7 +1868,8 @@ namespace acl
                    acl::last_serror());
 
 
-        if (declare_file.write(declare_code.c_str(), declare_code.size()) == -1)
+        if (declare_file.write(declare_code.c_str(),
+                               declare_code.size()) == -1)
             printf("write file error,%s", acl::last_serror());
 
 
@@ -1822,7 +1897,8 @@ namespace acl
         std::cout << "name        :" << _entry.name_ << std::endl;
         std::cout << "table_name_ :" << _entry.table_name_ << std::endl;
         std::cout << "file_path   :" << _entry.filepath_ << std::endl;
-        std::cout << "is_model    :" << (_entry.model_ ? "true" : "false") << std::endl;
+        const char * is_model = (_entry.model_ ? "true" : "false");
+        std::cout << "is_model    :" << is_model << std::endl;
         std::cout << "fields_     :" << std::endl;
 
 

@@ -8,7 +8,7 @@ public:
 
     }
     //@Insert{insert into customer(address,postcode,sex,cname) values (:address,:postcode,:sex,:cname)}
-    virtual bool insert(const customer &obj)
+    virtual bool insert(const customer_t &obj)
     {
         acl::query query;
         query.create_sql("insert into customer(address,postcode,sex,cname) values (:address,:postcode,:sex,:cname)");
@@ -56,7 +56,7 @@ public:
     }
 
     //@Update("update customer set address=:address,postcode=:postcode,sex=:sex,cname=:cname where id=:id")
-    virtual bool  update(const customer &obj)
+    virtual bool  update(const customer_t &obj)
     {
         acl::query query;
 
@@ -83,7 +83,7 @@ public:
     }
 
     //@Select{select * from customer where id=:id}
-    virtual bool select_by_id(customer  &obj, int id)
+    virtual bool select_by_id(customer_t  &obj, int id)
     {
         acl::query query;
         query.create_sql("select * from customer where id=:id");
@@ -134,7 +134,7 @@ public:
 
     }
     //@Insert{insert into orders(code,customer_id) values (:code,:customer_id)}
-    virtual bool insert(const orders &obj)
+    virtual bool insert(const orders_t &obj)
     {
         acl::query query;
         query.create_sql("insert into orders(code,customer_id)values(:code,:customer_id)");
@@ -179,7 +179,7 @@ public:
     }
 
     //@Update{update order set code=:code,customer_id=:customer_id where id=:id}
-    virtual bool update(const orders &obj)
+    virtual bool update(const orders_t &obj)
     {
         acl::query query;
 
@@ -204,7 +204,7 @@ public:
     }
 
     //@Select{select * from order where id=:id}
-    virtual bool select_by_id(orders &obj ,int id)
+    virtual bool select_by_id(orders_t &obj ,int id)
     {
         acl::query query;
         query.create_sql("select * from customer where id=:id");
@@ -249,7 +249,7 @@ public:
     //@Select{select c.id as cid,c.address,c.postcode,c.sex,c.cname,o.id as od,o.code,o.customer_id from customer c, order o where c.id=:id and o.customer_id=c.id}
     //@Result column="cid" property="id"
     //@Result column="oid" property="order.id"
-    virtual bool get_customer_order(customer_order  &obj, int id)
+    virtual bool get_customer_order(customer_order_t  &obj, int id)
     {
         acl::query query;
         query.create_sql("select c.id as cid,c.address,c.postcode,c.sex,c.cname,o.id as oid,o.code,o.customer_id from customer c, orders o where c.id=:id and o.customer_id=c.id");
@@ -287,7 +287,7 @@ public:
             if (cid)
                 obj.id = atoi(cid);
 
-            orders o;
+            orders_t o;
 
             if (code)
                 o.code = code;
@@ -303,7 +303,7 @@ public:
     //@Select{select c.id as cid,c.address,c.postcode,c.sex,c.cname,o.id as oid,o.code,o.customer_id from customer c, orders o where  o.customer_id=c.id}
     //@Result column="cid" property="id"
     //@Result column="oid" property="order.id"
-    virtual bool get_customer_orders(std::list<customer_order> &obj)
+    virtual bool get_customer_orders(std::list<customer_order_t> &obj)
     {
         acl::query query;
         query.create_sql("select c.id as cid,c.address,c.postcode,c.sex,c.cname,o.id as oid,o.code,o.customer_id from customer c, orders o where  o.customer_id=c.id");
@@ -319,7 +319,7 @@ public:
         for (size_t i = 0; i < db_.length(); ++i)
         {
 
-            customer_order customer_order_obj;
+            customer_order_t customer_order_obj;
 
             const acl::db_row* row = db_[i];
 
@@ -344,7 +344,7 @@ public:
 
             for (; i< db_.length(); i++)
             {
-                orders orders_obj;
+                orders_t orders_obj;
                 const acl::db_row* row1 = db_[i];
 
                 const char* code        = (*row1)["code"];
@@ -398,7 +398,7 @@ public:
     //@Select{select c.id as cid,c.address,c.postcode,c.sex,c.cname,o.id as oid,o.code,o.customer_id from customer c, orders o where o.id=:id and o.customer_id = c.id}
     //@Result column="cid" property="customer.id"
     //@Result column="oid" property="id"
-    virtual bool get_order_customer(order_customer &obj, int id)
+    virtual bool get_order_customer(order_customer_t &obj, int id)
     {
         acl::query query;
         query.create_sql("select c.id as cid,c.address,c.postcode,c.sex,c.cname,o.id as oid,o.code,o.customer_id from customer c, orders o where o.id=:id and o.customer_id = c.id");
@@ -450,7 +450,7 @@ public:
     //@Select{select c.id as cid,c.address,c.postcode,c.sex,c.cname,o.id as oid,o.code,o.customer_id from customer c, orders o where o.customer_id = c.id}
     //@Result column="cid" property="customer_order.id"
     //@Result column="oid" property="order.id"
-    virtual bool get_order_customers(std::list<order_customer> &result)
+    virtual bool get_order_customers(std::list<order_customer_t> &result)
     {
         acl::query query;
 
@@ -464,7 +464,7 @@ public:
 
         for(size_t i = 0; i < db_.length(); i++)
         {
-            order_customer obj;
+            order_customer_t obj;
             const acl::db_row* row = db_[i];
 
             const char* address     = (*row)["address"];

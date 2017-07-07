@@ -1,6 +1,6 @@
 #pragma once
 #include <map>
-#include <list>
+#include <vector>
 
 namespace acl
 {
@@ -150,7 +150,6 @@ namespace acl
             std::string sql_;
             std::string declare_;
             std::string name_;
-            //column :property            
             std::vector<result> columns_;
             std::vector<field> params_;
             std::vector<std::string> sql_params_;
@@ -200,10 +199,10 @@ namespace acl
         void update_mapper_function_columns(mapper_function &func);
         std::vector<mapper_function::result> get_result_columns();
 
-        std::string gen_class_implememt(const mapper &m);
+        std::string gen_class_implement(const mapper &m);
         std::string gen_query_set_parameters(const mapper_function &func);
         std::string get_assign_code(const field &f, const std::string &str);
-        std::string gen_func_implememt(const mapper_function &func);
+        std::string gen_func_implement(const mapper_function &func);
         std::string get_class_name(const std::string &parent_name);
         std::string gen_class_declare(const mapper &m);
         std::string gen_annotation(const mapper_function &func,bool tab = true);

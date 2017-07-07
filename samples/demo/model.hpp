@@ -5,9 +5,9 @@
 
 //@Model
 //@Table{customer}
-struct customer 
+struct customer_t
 {
-    customer()
+    customer_t()
     {
         //}}}
         /*}}}}}*/
@@ -36,7 +36,7 @@ struct customer
 
 //@Model
 //@Table{orders}
-struct orders
+struct orders_t
 {
     int id;
     std::string code;
@@ -44,15 +44,15 @@ struct orders
 };
 
 //@Model
-struct customer_order :customer 
+struct customer_order_t :customer_t
 {
-    //一对多
-    std::list<orders> orders;
+    //涓�瀵瑰
+    std::list<orders_t> orders;
 };
 
 //@Model
-struct order_customer :orders
+struct order_customer_t :orders_t
 {
-    //多对一
-    customer customer;
+    //澶氬涓�
+    customer_t customer;
 };
