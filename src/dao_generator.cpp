@@ -1,4 +1,5 @@
 #include <iostream>
+#include <stdexcept>
 #include "acl_cpp/lib_acl.hpp"
 #include "lib_acl.h"
 #include "dao_generator.h"
@@ -17,11 +18,11 @@ namespace acl
         return file_path;
     }
 
-    struct syntax_error : std::runtime_error
+    struct syntax_error : public std::logic_error
     {
     public:
         syntax_error(const std::string &error = "syntax_error")
-            :std::runtime_error(error)
+            :std::logic_error(error)
         {
 
         }
