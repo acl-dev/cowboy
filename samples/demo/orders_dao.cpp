@@ -9,7 +9,8 @@ orders_dao::orders_dao(acl::db_handle& handle)
 {
 }
 
-//@Insert{insert into order(code,customer_id) values (:code,:customer_id)}
+/*@Insert{insert into order(code,customer_id)
+                        values (:code,:customer_id)}*/
 bool orders_dao::insert(const orders_t &obj) 
 {
 	acl::query query;
@@ -58,11 +59,15 @@ bool orders_dao::delete_by_id(int id)
 	return true;
 }
 
-//@Update{update order set code=:code,customer_id=:customer_id where id=:id}
+/*@Update{update order 
+                set 
+                  code=:code,
+                  customer_id=:customer_id 
+                where id=:id}*/
 bool orders_dao::update(const orders_t &obj) 
 {
 	acl::query query;
-	query.create_sql("update order set code=:code,customer_id=:customer_id where id=:id");
+	query.create_sql("update order set code=:code, customer_id=:customer_id where id=:id");
 
 	query.set_parameter("code", obj.code.c_str());
 	query.set_parameter("customer_id", obj.customer_id);

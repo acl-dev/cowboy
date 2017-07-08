@@ -9,7 +9,8 @@ customer_dao::customer_dao(acl::db_handle& handle)
 {
 }
 
-//@Insert{insert into customer(address,postcode,sex,cname) values (:address,:postcode,:sex,:cname)}
+/*@Insert{insert into customer(address,postcode,sex,cname) 
+							values (:address,:postcode,:sex,:cname)}*/
 bool customer_dao::insert(const customer_t &obj) 
 {
 	acl::query query;
@@ -60,11 +61,17 @@ bool customer_dao::delete_by_id(int id)
 	return true;
 }
 
-//@Update{update customer set address=:address,postcode=:postcode,sex=:sex,cname=:cname where id=:id}
+/*@Update{update customer 
+               set 
+                address=:address,
+                postcode=:postcode,
+                sex=:sex,
+                cname=:cname 
+               where id=:id}*/
 bool customer_dao::update(const customer_t &obj) 
 {
 	acl::query query;
-	query.create_sql("update customer set address=:address,postcode=:postcode,sex=:sex,cname=:cname where id=:id");
+	query.create_sql("update customer set address=:address, postcode=:postcode, sex=:sex, cname=:cname where id=:id");
 
 	query.set_parameter("address", obj.address.c_str());
 	query.set_parameter("postcode", obj.postcode.c_str());
