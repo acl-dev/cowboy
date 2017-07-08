@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.7)
-project(dao_generator)
+project(gen_dao)
 
 if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
     message(FATAL_ERROR "please into build dir to build!")
@@ -22,14 +22,8 @@ include_directories(include
         ${ACL_ROOT}/lib_acl_cpp/include)
 
 set(SOURCE_FILES
-        include/dao_generator.h
-        samples/demo/create_tables.hpp
-        samples/demo/dao.hpp
-        samples/demo/helper.hpp
-        samples/demo/main.cpp
-        samples/demo/mapper.hpp
-        samples/demo/model.hpp
+        src/main.cpp
         src/dao_generator.cpp)
 
-add_executable(dao_generator ${SOURCE_FILES})
-target_link_libraries(dao_generator ${depend_libs})
+add_executable(gen_dao ${SOURCE_FILES})
+target_link_libraries(gen_dao ${depend_libs})

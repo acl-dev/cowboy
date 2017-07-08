@@ -13,9 +13,11 @@ struct customer_mapper
     //@Update{update customer set address=:address,postcode=:postcode,sex=:sex,cname=:cname where id=:id}
     virtual bool update(const customer_t &obj) = 0;
 
+    //@Update{update customer set address=:new_address where id=:id}
+    virtual bool update_address(const customer_t &obj,const std::string &new_address) = 0;
+
     //@Select{select * from customer where id=:id}
     virtual bool select_by_id(customer_t &obj, int id) = 0;
-
 };
 
 //@Mapper
@@ -32,6 +34,15 @@ struct orders_mapper
 
     //@Select{select * from order where id=:id}
     virtual bool select_by_id(orders_t &obj, int id) = 0;
+
+    //@Select{select * from order where cname=:name}
+    virtual bool select_by_name(std::list<orders_t> &obj, std::string &name) = 0;
+
+    //@Select{select * from order where customer_id=:cid}
+    virtual bool get_customer_ordors(std::list<orders_t> &obj, int cid) = 0;
+
+    //@Select{select * from order where customer_id=:cid and code !=:code}
+    virtual bool get_customer_ordors_without(std::list<orders_t> &obj, int cid, const std::string &code) = 0;
 };
 
 //@Mapper
@@ -60,4 +71,10 @@ struct order_customer_mapper
     //@Result{column=cid, property=customer.id}
     //@Result{column=oid, property=id}
     virtual bool get_order_customers(std::list<order_customer_t> &obj) = 0;
+
+
+    //@Select{select c.id as cid,c.address,c.postcode,c.sex,c.cname,o.id as oid,o.code,o.customer_id from customer c, orders o where o.customer_id = c.id and c.cname = :name}
+    //@Result{column=cid, property=customer.id}
+    //@Result{column=oid, property=id}
+    virtual bool get_order_customers_by_name(std::list<order_customer_t> &obj,const std::string & name) = 0;
 };

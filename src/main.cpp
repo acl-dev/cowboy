@@ -4,12 +4,14 @@
 
 
 
-static void usage(const char* procname)
+static void usage(...)
 {
-    printf("usage: %s -h [help]\r\n"
-           " -m [generate multifile,default generate single dao.h and dao.cpp]\r\n"
-           " -s path [model and mapper files path,default current dir]\r\n"
-           " -d path [generate dao files path,default current dir]\r\n", procname);
+    printf("usage: \n"
+           "    -h          [help]\r\n"
+           "    -m          [generate multifile,default generate single dao.h and dao.cpp]\r\n"
+           "    -p          [print parse result status]\r\n"
+           "    -s path     [path of mapper,model files,default current dir]\r\n"
+           "    -d path     [generate dao files to the path,default current dir]\r\n");
 }
 
 
@@ -19,26 +21,26 @@ int main(int argc, char *argv[])
     std::string source_filepath("./");
     std::string dest_filepath("./");
     bool mutilfile = false;
+    bool print = false;
 
-    while ((ch = getopt(argc, argv, "mhs:d:")) > 0)
+    while ((ch = getopt(argc, argv, "pmhs:d:")) > 0)
     {
         switch (ch)
         {
             case 'h':
-            case 'H':
                 usage(argv[0]);
                 return 0;
             case 's':
-            case 'S':
                 source_filepath = optarg;
                 break;
             case 'd':
-            case 'D':
                 dest_filepath = optarg;
                 break;
             case 'm':
-            case 'M':
                 mutilfile = true;
+                break;
+            case 'p':
+                print = true;
                 break;
             default:
                 break;
@@ -51,14 +53,34 @@ int main(int argc, char *argv[])
         printf("parse_file error,exit()\n");
         return -1;
     }
-    if (mutilfile)
+    if (print)
     {
-        gen.gen_code_mutil_files(dest_filepath);
+        gen.print_entries();
     }
-    else
+    try
     {
-        gen.gen_code(dest_filepath);
+        if (mutilfile)
+        {
+            gen.gen_code_mutil_files(dest_filepath);
+        }
+        else
+        {
+            gen.gen_code(dest_filepath);
+        }
     }
+    catch (const std::exception&e)
+    {
+        printf("gen code error:%s",e.what());
+        return -1;
+    }
+    
+    
+    if (print)
+    {
+        gen.print_mappers();
+    }
+
+
     printf("ok\n");
     return 0;
 }

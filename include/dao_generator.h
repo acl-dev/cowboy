@@ -49,6 +49,7 @@ namespace acl
                 e_using,            // using  
                 e_namespace,        // namespace
                 e_const,            // const
+                e_long_long_int,    // long long int
                 e_int,              // int
                 e_bool,             // bool
                 e_float,            // float
@@ -92,12 +93,13 @@ namespace acl
             {
                 e_void,
                 e_bool,
-                e_int,     // int
-                e_float,   // float
-                e_double,  // double
-                e_string,  // acl::string ,std::string
-                e_entry,   // entry ,struct
-                e_vector,  // std::list<object>, std::vector<object>
+                e_long_long_int, // long long int
+                e_int,           // int
+                e_float,         // float
+                e_double,        // double
+                e_string,        // acl::string ,std::string
+                e_entry,         // entry ,struct
+                e_vector,        // std::list<object>, std::vector<object>
             } type_t;
 
             type_t type_;
@@ -161,13 +163,15 @@ namespace acl
         struct mapper
         {
             std::string name_;
-            std::list<mapper_function> mfuncs_;
-            std::set<std::string> files_;
+            std::vector<mapper_function> mfuncs_;
+            std::set<std::string> model_files_;
+            std::string mapper_path_;
         };
 
     public:
         dao_generator();
         void print_entries();
+        void print_mappers();
         bool parse_path(const std::string &path);
         bool parse_file(const std::string &file_path);
         void gen_code(const std::string &path);
@@ -213,10 +217,14 @@ namespace acl
         std::string gen_func_impl_name(const std::string &class_name, const std::string &declare_);
         std::string gen_streq_code()const;
 
+
     private:
         int to_field_type(int type);
-        void print_entry(const entry &_entry);
-        
+        void print_entry(const entry &entry);
+        void print_mapper(const mapper &mapper);
+        void print_func(const mapper_function &func);
+        std::string get_type(const mapper_function &func);
+
         void entry_reset();
         bool check_entry(std::string &name);
         std::vector<field> get_fields(const std::string &name);

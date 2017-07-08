@@ -19,14 +19,21 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\..\samples\demo\dao.cpp" />
+    <ClCompile Include="..\..\..\..\samples\demo\customer_dao.cpp" />
+    <ClCompile Include="..\..\..\..\samples\demo\customer_order_dao.cpp" />
     <ClCompile Include="..\..\..\..\samples\demo\main.cpp" />
+    <ClCompile Include="..\..\..\..\samples\demo\orders_dao.cpp" />
+    <ClCompile Include="..\..\..\..\samples\demo\order_customer_dao.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\..\samples\demo\dao.h" />
+    <ClInclude Include="..\..\..\..\samples\demo\create_tables.hpp" />
+    <ClInclude Include="..\..\..\..\samples\demo\customer_dao.h" />
+    <ClInclude Include="..\..\..\..\samples\demo\customer_order_dao.h" />
     <ClInclude Include="..\..\..\..\samples\demo\helper.hpp" />
     <ClInclude Include="..\..\..\..\samples\demo\mapper.h" />
     <ClInclude Include="..\..\..\..\samples\demo\model.h" />
+    <ClInclude Include="..\..\..\..\samples\demo\orders_dao.h" />
+    <ClInclude Include="..\..\..\..\samples\demo\order_customer_dao.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{191DC943-283B-47A6-B250-78D0354A0879}</ProjectGuid>

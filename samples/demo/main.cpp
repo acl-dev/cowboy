@@ -5,8 +5,7 @@
 #include "create_tables.hpp"
 #include "model.h"
 #include "mapper.h"
-#include "dao.h"
-#include "../../include/dao_generator.h"
+#include "daos.h"
 
 
 void customer_mapper_dao_insert(acl::db_mysql &db)

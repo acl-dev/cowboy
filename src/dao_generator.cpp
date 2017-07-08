@@ -171,6 +171,16 @@ namespace acl
                 return t;
             }
         }
+        else if (str == "long")
+        {
+            if(next_token() == "long" &&
+               next_token() == "int")
+            {
+                t.type_ = token::e_long_long_int;
+                return t;
+            }
+            throw syntax_error("unknow type");
+        }
         else if (str == "int")
         {
             t.type_ = token::e_int;
@@ -490,6 +500,10 @@ namespace acl
         {
             return field::e_bool;
         }
+        else if (type == token::e_long_long_int)
+        {
+            return field::e_long_long_int;
+        }
         throw syntax_error();
         return 0;
     }
@@ -591,7 +605,7 @@ namespace acl
             // >
             if (t.type_ != token::e_greate)
                 throw syntax_error();
-            std::cout << current_line_.c_str();
+            //std::cout << current_line_.c_str();
         }
     }
     void dao_generator::parse_construct_func()
@@ -647,7 +661,7 @@ namespace acl
         }
         if (t1.type_ == token::e_open_curly_brace)
         {
-            std::cout << "struct begin" << std::endl;
+            //std::cout << "struct begin" << std::endl;
         }
 
         std::string column;
@@ -675,13 +689,14 @@ namespace acl
                 else
                 {
                     //normal comment
-                    std::cout << current_line_.c_str() << std::endl;
+                    //std::cout << current_line_.c_str() << std::endl;
                     line_buffer_.clear();
                     continue;
                 }
             }
 
             if (t1.type_ == token::e_int ||
+                t1.type_ == token::e_long_long_int ||
                 t1.type_ == token::e_float ||
                 t1.type_ == token::e_double ||
                 t1.type_ == token::e_acl_string ||
@@ -788,7 +803,7 @@ namespace acl
                 entry_.filepath_ = file_path_;
                 entries_.push_back(entry_);
                 entry_reset();
-                std::cout << "struct begin" << std::endl;
+                //std::cout << "struct begin" << std::endl;
                 break;
             }
         } while (true);
@@ -823,12 +838,15 @@ namespace acl
             if (t.type_ == token::e_acl_string ||
                 t.type_ == token::e_std_string ||
                 t.type_ == token::e_int ||
+                t.type_ == token::e_long_long_int ||
                 t.type_ == token::e_float ||
                 t.type_ == token::e_double)
             {
                 param.type_ = (field::type_t)to_field_type(t.type_);
                 param.type_str_ = t.str_;
                 token t2 = get_next_token();
+                if (t2.type_ == token::e_and)
+                    t2 = get_next_token();
                 if (t2.type_ != token::e_identifier)
                     throw syntax_error();
                 param.name_ = t2.str_;
@@ -850,7 +868,7 @@ namespace acl
                     throw syntax_error();
 
                 param.name_ = t2.str_;
-                mapper_.files_.insert(param.entry_->filepath_);
+                mapper_.model_files_.insert(param.entry_->filepath_);
             }
             else if (t.type_ == token::e_std_list ||
                      t.type_ == token::e_std_vector)
@@ -872,7 +890,7 @@ namespace acl
                 param.entry_ = new entry(get_entry(t2.str_));
                 param.type_str_ = t.str_;
                 param.name_ = t3.str_;
-                mapper_.files_.insert(param.entry_->filepath_);
+                mapper_.model_files_.insert(param.entry_->filepath_);
             }
             params.push_back(param);
 
@@ -896,6 +914,7 @@ namespace acl
 
         if (t.type_ == token::e_void ||
             t.type_ == token::e_int ||
+            t.type_ == token::e_long_long_int ||
             t.type_ == token::e_bool ||
             t.type_ == token::e_float ||
             t.type_ == token::e_double ||
@@ -1167,9 +1186,11 @@ namespace acl
                 t = get_next_token();
                 if (t.type_ != token::e_semicolon)
                     throw syntax_error();
+                mapper_.mapper_path_ = file_path_;
                 mappers_.push_back(mapper_);
                 mapper_.mfuncs_.clear();
                 mapper_.name_.clear();
+                mapper_.mapper_path_.clear();
                 break;
             }
         } while (true);
@@ -1185,7 +1206,7 @@ namespace acl
             }
             else if (t.type_ == token::e_pragma_once)
             {
-                std::cout << current_line_.c_str();
+                //std::cout << current_line_.c_str();
                 continue;
             }
             else if (t.type_ == token::e_comment)
@@ -1219,7 +1240,7 @@ namespace acl
             }
             else if (t.type_ == token::e_pragma_once)
             {
-                std::cout << current_line_.c_str();
+                //std::cout << current_line_.c_str();
                 continue;
             }
             else if (t.type_ == token::e_comment)
@@ -1355,7 +1376,7 @@ namespace acl
         code += br;
         code += br;
 
-        std::list<mapper_function>::const_iterator it = m.mfuncs_.begin();
+        std::vector<mapper_function>::const_iterator it = m.mfuncs_.begin();
         for (; it != m.mfuncs_.end(); ++it)
         {
             code += gen_annotation(*it);
@@ -1443,6 +1464,15 @@ namespace acl
         {
             return std::string("atoi(") + str + ");";
         }
+        else if (f.type_ == field::e_long_long_int)
+        {
+            return std::string("atoll(") + str + ");";
+        }
+        else if (f.type_ == field::e_float|| 
+                 f.type_ == field::e_double)
+        {
+            return std::string("atof(") + str + ");";
+        }
         return str + ";";
     }
 
@@ -1470,14 +1500,14 @@ namespace acl
         {
             code += tab + "if (!db_handle_.exec_update(query))" + br;
             code += tab + "{" + br;
-            code += tab + tab + "logger_error(\"db_.exec_update failed :%s\","
+            code += tab + tab + "logger_error(\"exec_update() failed :%s\","
                                         "db_handle_.get_error());" + br;
             code += tab + tab + "return false;" + br;
             code += tab + "}" + br;
 
             code += tab + "if (!db_handle_.commit())" + br;
             code += tab + "{" + br;
-            code += tab + tab + "logger_error(\"db_.commit failed :%s\","
+            code += tab + tab + "logger_error(\"commit() failed :%s\","
                                         "db_handle_.get_error());" + br;
             code += tab + tab + "return false;" + br;
             code += tab + "}" + br;
@@ -1489,7 +1519,7 @@ namespace acl
         {
             code += tab + "if (!db_handle_.exec_select(query))" + br;
             code += tab + "{" + br;
-            code += tab + tab + "logger_error(\"db_.exec_select "
+            code += tab + tab + "logger_error(\"exec_select() "
                                         "failed :%s\",db_handle_."
                                         "get_error());" + br;
             code += tab + tab + "return false;" + br;
@@ -1821,7 +1851,7 @@ namespace acl
         code += br;
         code += br;
 
-        std::list<mapper_function>::const_iterator it = m.mfuncs_.begin();
+        std::vector<mapper_function>::const_iterator it = m.mfuncs_.begin();
         for (; it != m.mfuncs_.end(); ++it)
         {
             code += gen_annotation(*it, false);
@@ -1942,7 +1972,7 @@ namespace acl
     void dao_generator::gen_code_mutil_files(const std::string &path)
     {
         std::string base_path(path);
-
+        std::vector<std::string> dao_includes;
         if (base_path.size())
         {
             char ch = base_path[base_path.size() - 1];
@@ -1994,11 +2024,12 @@ namespace acl
             }
             std::string code;
             code += "#include \"acl_cpp/lib_acl.hpp\"" + br;
-            for (std::set<std::string>::iterator it = m.files_.begin();
-                    it != m.files_.end(); ++it)
+            for (std::set<std::string>::iterator it = m.model_files_.begin();
+                    it != m.model_files_.end(); ++it)
             {
                 code += "#include \"" + get_filename(*it) + "\""+br;
             }
+            code += "#include \"" + get_filename(m.mapper_path_) + "\"" + br2;
             code += "#include \""+class_name+".h\""+br2;
             if(use_strreq_)
                 code += gen_streq_code();
@@ -2016,34 +2047,122 @@ namespace acl
                 return ;
             }
             file.close();
+            dao_includes.push_back(header_file);
+        }
+        acl::ofstream daos;
+        std::string daos_filepath;
+        std::string includes_codes;
+
+        daos_filepath = base_path + "daos.h";
+        if (!daos.open_trunc(daos_filepath.c_str()))
+        {
+            printf("create file(%s) error:%s",
+                   daos_filepath.c_str(),
+                   acl::last_serror());
+            return;
+        }
+
+        includes_codes += "#pragma once"+br;
+
+        for (size_t i = 0; i < dao_includes.size(); i++)
+        {
+            includes_codes += "#include \"" + get_filename(dao_includes[i]) + "\"" + br;
+        }
+        if (daos.write(includes_codes.c_str(), includes_codes.size()) == -1)
+        {
+            printf("write file error%s\n", acl::last_serror());
+            daos.close();
+            return;
         }
     }
+    std::string dao_generator::get_type(const mapper_function &func)
+    {
+        if (func.type_ == mapper_function::e_insert)
+            return "insert";
+        else if (func.type_ == mapper_function::e_update)
+            return "update";
+        else if (func.type_ == mapper_function::e_delete)
+            return "delete";
+        return "select";
+    }
+    void dao_generator::print_func(const mapper_function &func)
+    {
+        std::cout << "  func_name  :" << func.name_ << std::endl;
+        std::cout << "  declare    :" << func.declare_ << std::endl;
+        std::cout << "  return     :" << func.return_.type_str_ << std::endl;
+        std::cout << "  type       :" << get_type(func) << std::endl;
+
+        for (size_t i = 0; i < func.params_.size(); i++)
+        {
+            printf(  "  func_params:{type=%s, name=%s}\n",
+                   func.params_[i].type_str_.c_str(),
+                   func.params_[i].name_.c_str());
+        }
+
+        std::cout << "  sql        :" << func.sql_ << std::endl;
+
+        for (size_t i = 0; i < func.columns_.size(); i++)
+        {
+            printf(  "  column     :{columns=%s, property=%s}\n", 
+                   func.columns_[i].column_.c_str(), 
+                   func.columns_[i].property_.c_str());
+        }
+        for (size_t i = 0; i < func.sql_params_.size(); i++)
+        {
+            std::cout << "  sql_param  :" << func.sql_params_[i]<< std::endl;
+        }
+
+    }
+    void dao_generator::print_mapper(const mapper &m)
+    {
+        std::cout << "  name      :" << m.name_ << std::endl;
+        std::cout << "  file_path :" << m.mapper_path_ << std::endl;
+        std::cout << "  func_size :" <<m.mfuncs_.size()<< std::endl;
+
+        for (size_t i = 0; i < m.mfuncs_.size(); i++)
+        {
+            std::cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+                "^^^^^^^^^^^^^^^^^^^^^^^^^^^^" << std::endl;
+            print_func(m.mfuncs_[i]);
+        }
+    }
+
     void dao_generator::print_entry(const entry &_entry)
     {
         for (size_t i = 0; i < 72; i++)
         {
-            std::cout << "*";
+            std::cout << ".";
         }
         std::cout << std::endl;
-        std::cout << "name        :" << _entry.name_ << std::endl;
-        std::cout << "table_name_ :" << _entry.table_name_ << std::endl;
-        std::cout << "file_path   :" << _entry.filepath_ << std::endl;
         const char * is_model = (_entry.model_ ? "true" : "false");
-        std::cout << "is_model    :" << is_model << std::endl;
-        std::cout << "fields_     :" << std::endl;
+
+        std::cout << "  name        :" << _entry.name_ << std::endl;
+        std::cout << "  table_name  :" << _entry.table_name_ << std::endl;
+        std::cout << "  file_path   :" << _entry.filepath_ << std::endl;
+        std::cout << "  is_model    :" << is_model << std::endl;
+        std::cout << "  field_size  :" << _entry.fields_.size()<<std::endl;
 
 
         for (size_t i = 0; i < _entry.fields_.size(); i++)
         {
             field e = _entry.fields_[i];
             std::cout << "-----------------------------" << std::endl;
-            std::cout << "name    :" << e.name_ << std::endl;
-            std::cout << "column_ :" << e.column_ << std::endl;
+            std::cout << "  name        :" << e.name_ << std::endl;
+            std::cout << "  column_name :" << e.column_ << std::endl;
             if (e.entry_)
-                std::cout << "entry_name_:" << e.entry_->name_ << std::endl;
-            std::cout << "type    :" << e.type_str_ << std::endl;
+            std::cout << "  entry_name  :" << e.entry_->name_ << std::endl;
+            std::cout << "  type_str    :" << e.type_str_ << std::endl;
         }
 
+    }
+    void dao_generator::print_mappers()
+    {
+        for (size_t i = 0; i < mappers_.size(); i++)
+        {
+            std::cout << "-----------------------------------------"
+                "---------------------------------------"<< std::endl;
+            print_mapper(mappers_[i]);
+        }
     }
     void dao_generator::print_entries()
     {

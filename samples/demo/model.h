@@ -21,7 +21,7 @@ struct customer_t
         a++;
 
     }
-    int id;
+    long long int id;
     std::string address;
 
     //@Column{postcode}
@@ -38,6 +38,12 @@ struct customer_t
 //@Table{orders}
 struct orders_t
 {
+    orders_t()
+    {
+        id = 0;
+        customer_id = 0;
+
+    }
     int id;
     std::string code;
     int customer_id;

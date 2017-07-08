@@ -21,8 +21,17 @@
     <ClCompile Include="..\..\..\..\samples\demo\main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\samples\demo\dao.cpp">
-      <Filter>头文件</Filter>
+    <ClCompile Include="..\..\..\..\samples\demo\customer_dao.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\samples\demo\customer_order_dao.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\samples\demo\order_customer_dao.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\samples\demo\orders_dao.cpp">
+      <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -35,7 +44,19 @@
     <ClInclude Include="..\..\..\..\samples\demo\model.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\samples\demo\dao.h">
+    <ClInclude Include="..\..\..\..\samples\demo\customer_dao.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\samples\demo\customer_order_dao.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\samples\demo\order_customer_dao.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\samples\demo\orders_dao.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\samples\demo\create_tables.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
