@@ -238,6 +238,8 @@ namespace acl
         mapper mapper_;
         std::vector<mapper> mappers_;
 
+        std::set<std::string> model_files_;
+        std::set<std::string> mapper_files_;
         bool use_strreq_;
     };
 }

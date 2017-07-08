@@ -3,9 +3,9 @@
 #include "acl_cpp/lib_acl.hpp"
 #include "helper.hpp"
 #include "create_tables.hpp"
-#include "model.hpp"
-#include "mapper.hpp"
-#include "dao.hpp"
+#include "model.h"
+#include "mapper.h"
+#include "dao.h"
 #include "../../include/dao_generator.h"
 
 
@@ -65,7 +65,7 @@ void order_customer_dao_test(acl::db_mysql &db)
     dao.get_order_customers(list);
 }
 
-int db_test(void)
+int main(void)
 {
     acl::acl_cpp_init();
 
@@ -89,21 +89,5 @@ int db_test(void)
 
     order_customer_dao_test(db);
 
-    return 0;
-}
-
-
-int main()
-{
-    acl::dao_generator gen;
-
-    gen.parse_file("F:\\fork\\acl-dev\\orm\\samples\\demo\\model.hpp");
-
-    gen.print_entries();
-
-    gen.parse_file("F:\\fork\\acl-dev\\dao_generator\\samples\\demo\\mapper.hpp");
-
-    gen.gen_code("");
-    
     return 0;
 }

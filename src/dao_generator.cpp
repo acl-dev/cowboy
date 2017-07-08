@@ -5,6 +5,18 @@
 
 namespace acl
 {
+    static inline std::string get_filename(const std::string &file_path)
+    {
+        size_t nps = file_path.find_last_of('/');
+        if (nps == file_path.npos)
+        {
+            nps = file_path.find_last_of('\\');
+        }
+        if (nps != file_path.npos)
+            return file_path.substr(nps + 1);
+        return file_path;
+    }
+
     struct syntax_error : std::runtime_error
     {
     public:
@@ -542,10 +554,12 @@ namespace acl
                 _token = get_next_token();
                 if (_token.type_ == token::e_$models)
                 {
+                    model_files_.insert(file_path);
                     return parse_model_file();
                 }
                 else
                 {
+                    mapper_files_.insert(file_path);
                     return parse_mapper_file();
                 }
             }
@@ -553,7 +567,8 @@ namespace acl
 
         }catch (std::exception &e)
         {
-            printf("parse file error %s\n", file_path.c_str());
+            printf("%s\n", e.what());
+            printf("file_path:%s\n",file_path_.c_str());
             printf("line:%d   %s   >>%s",
                    line_num_,
                    current_line_.c_str(),
@@ -1345,7 +1360,7 @@ namespace acl
         {
             code += gen_annotation(*it);
             code += tab;
-            code += it->declare_;
+            code += it->declare_ + ";";
             code += br;
             code += br;
         }
@@ -1428,7 +1443,7 @@ namespace acl
         {
             return std::string("atoi(") + str + ");";
         }
-        return str;
+        return str + ";";
     }
 
     std::string dao_generator::gen_func_implement(
@@ -1596,7 +1611,7 @@ namespace acl
                                       "db_handle_.length(); ++i)" + br;
                 code += tab + "{" + br;
                 code += tab + tab + func.params_.front().entry_->name_ +
-                        " " + obj + br;
+                    " " + obj + ";" + br;
                 code += tab + tab + "const acl::db_row* row "
                                             "= db_handle_[i];" +
                         br + br;
@@ -1684,11 +1699,11 @@ namespace acl
                     {
                         code += br;
                         code += tab + tab +
-                                "for (; i< db_.length(); i++)" + br;
+                                "for (; i< db_handle_.length(); i++)" + br;
                         code += tab + tab + "{" + br;
                         std::string item = f.entry_->name_ + "_item";
                         code += tab + tab + tab +
-                                f.entry_->name_ + " " + item;
+                            f.entry_->name_ + " " + item + ";";
                         std::vector<field> &fields2 = f.entry_->fields_;
                         code += br;
 
@@ -1769,7 +1784,7 @@ namespace acl
                             code += get_assign_code(f2, "$$" + f2.column_) + br;
                         }
                         code += br;
-                        code += tab3 + func.params_.front().name_ + "." +
+                        code += tab3 + obj + "." +
                                 f.name_ + ".push_back(" + item + ");" + br;
 
                         code += br;
@@ -1891,7 +1906,18 @@ namespace acl
 
         std::string buffer;
         buffer += "#include \"acl_cpp/lib_acl.hpp\"" + br;
-        buffer += "#include \"dao.hpp\"" + br;
+        for (std::set<std::string>::iterator it = model_files_.begin();
+             it != model_files_.end(); ++it)
+        {
+            buffer += "#include \"" + get_filename(*it) + "\"" + br;
+        }
+        for (std::set<std::string>::iterator it = mapper_files_.begin();
+             it != mapper_files_.end(); ++it)
+        {
+            buffer += "#include \"" + get_filename(*it) + "\"" + br;
+        }
+
+        buffer += "#include \"dao.h\"" + br;
         buffer += br;
 
         if (use_strreq_)
@@ -1912,17 +1938,7 @@ namespace acl
         }
     }
 
-    static inline std::string get_filename(const std::string &file_path)
-    {
-        size_t nps = file_path.find_last_of('/');
-        if(nps == file_path.npos)
-        {
-            nps = file_path.find_last_of('\\');
-        }
-        if(nps != file_path.npos)
-            return file_path.substr(nps + 1);
-        return file_path;
-    }
+
     void dao_generator::gen_code_mutil_files(const std::string &path)
     {
         std::string base_path(path);
@@ -1948,7 +1964,7 @@ namespace acl
             acl::ofstream file;
 
             std::string class_name = get_class_name(m.name_);
-            header_file = base_path+class_name+".hpp";
+            header_file = base_path+class_name+".h";
             source_file = base_path+class_name+".cpp";
 
             header_code += "#pragma once" +br2;
@@ -1981,19 +1997,19 @@ namespace acl
             for (std::set<std::string>::iterator it = m.files_.begin();
                     it != m.files_.end(); ++it)
             {
-                code += "#include \"" + *it + "\""+br;
+                code += "#include \"" + get_filename(*it) + "\""+br;
             }
             code += "#include \""+class_name+".h\""+br2;
             if(use_strreq_)
                 code += gen_streq_code();
 
-            if(!file.write(code.c_str(), code.size()) == -1)
+            if(file.write(code.c_str(), code.size()) == -1)
             {
                 printf("write file error%s\n", acl::last_serror());
                 file.close();
                 return ;
             }
-            if(!file.write(source_code.c_str(), source_code.size()) == -1)
+            if(file.write(source_code.c_str(), source_code.size()) == -1)
             {
                 printf("write file error%s\n", acl::last_serror());
                 file.close();

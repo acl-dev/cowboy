@@ -13,29 +13,17 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="dao">
-      <UniqueIdentifier>{b0ece330-b0fc-4519-bef0-a0e048bad9e9}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\..\samples\demo\main.cpp">
+    <ClCompile Include="..\..\..\..\src\main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\samples\demo\dao.cpp">
-      <Filter>头文件</Filter>
+    <ClCompile Include="..\..\..\..\src\dao_generator.cpp">
+      <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\..\samples\demo\helper.hpp">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\samples\demo\mapper.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\samples\demo\model.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\samples\demo\dao.h">
+    <ClInclude Include="..\..\..\..\include\dao_generator.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
