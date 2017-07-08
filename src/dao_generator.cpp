@@ -36,6 +36,14 @@ namespace acl
     {
         tokens_.push_back(t);
     }
+    void dao_generator::store_file_point()
+    {
+        file_offset_ = file_.ftell();
+    }
+    void dao_generator::reload_file_point()
+    {
+        file_.fseek(file_offset_, SEEK_SET);
+    }
     void dao_generator::reset_lexer()
     {
         tokens_.clear();
@@ -1112,9 +1120,15 @@ namespace acl
         mapper_.name_ = t.str_;
         do
         {
+            bool mutil_line = false;
             t = get_next_token();
             if (t.type_ == token::e_comment)
             {
+                t = get_next_token();
+            }
+            else if(t.type_ == token::e_comment_begin)
+            {
+                mutil_line = true;
                 t = get_next_token();
             }
             if (t.type_ == token::e_$insert ||
@@ -1134,9 +1148,40 @@ namespace acl
 
                 if (get_next_token().type_ != token::e_open_curly_brace)
                     throw syntax_error();
-                mfunc.sql_ = line_buffer_.
-                        substr(0,line_buffer_.find_last_of('}'));
+
+                mfunc.sql_mutil_line_ = mutil_line;
+                if(!mutil_line)
+                {
+                    mfunc.sql_ += line_buffer_.
+                            substr(0,line_buffer_.find_last_of('}'));
+                }
+                else
+                {
+                    store_file_point();
+                    bool end = false;
+                    do
+                    {
+                        for (int i = 0; i < line_buffer_.size(); ++i)
+                        {
+                            char ch = line_buffer_[i];
+                            if(ch != '}')
+                                mfunc.sql_.push_back(ch);
+                            else
+                            {
+                                line_buffer_.clear();
+                                end = true;
+                                break;
+                            }
+                        }
+                        if(end)
+                            break;
+                        line_buffer_ = next_line();
+                    }while(true);
+                    reload_file_point();
+                }
+
                 mfunc.sql_params_ = get_sql_param();
+                line_buffer_.clear();
 
                 token t2 = get_next_token();
                 token t3 = get_next_token();
@@ -1338,19 +1383,27 @@ namespace acl
             const mapper_function &func, bool tab_)
     {
         std::string code;
-        if (tab_)
-            code += tab;
         if (func.type_ == mapper_function::e_insert)
-            code += "//@Insert{";
+            code += "@Insert{";
         else if (func.type_ == mapper_function::e_update)
-            code += "//@Update{";
+            code += "@Update{";
         else if (func.type_ == mapper_function::e_delete)
-            code += "//@Delete{";
+            code += "@Delete{";
         else if (func.type_ == mapper_function::e_select)
-            code += "//@Select{";
+            code += "@Select{";
         code += func.sql_ + "}";
-        code += br;
 
+        if(func.sql_mutil_line_)
+        {
+            code  = "/*" +code +"*/";
+        }
+        else
+        {
+            code = "//" + code;
+        }
+        code += br;
+        if(tab_)
+            code = tab + code;
 
 
         for (size_t i = 0; i < func.columns_.size(); i++)
@@ -1476,14 +1529,72 @@ namespace acl
         }
         return str + ";";
     }
+    static inline std::string skip_all(const std::string &str,
+                                       const std::string &skip_str)
+    {
+        std::string buffer;
+        for (size_t i = 0; i < str.size(); ++i)
+        {
+            char ch = str[i];
+            if(skip_str.find(ch) == std::string::npos)
+            {
+                buffer.push_back(ch);
+            }
+        }
+        return buffer;
+    }
+
+    static inline std::string replace(const std::string &str,
+                                      char from,
+                                      char to)
+    {
+        std::string buffer;
+        for (size_t i = 0; i < str.size(); ++i)
+        {
+            char ch = str[i];
+            if(ch == from)
+            {
+                buffer.push_back(to);
+            }else
+            {
+                buffer.push_back(ch);
+            }
+        }
+        return buffer;
+    }
+    static inline std::string skip_multi_space(const std::string &str)
+    {
+        std::string buffer;
+        for (size_t i = 0; i < str.size(); ++i)
+        {
+            char ch = str[i];
+            if(ch == ' ')
+            {
+                buffer.push_back(' ');
+                for ( ; i < str.size(); ++i)
+                {
+                    ch = str[i];
+                    if(ch != ' ')
+                        break;
+                }
+            }
+
+            buffer.push_back(ch);
+        }
+        return buffer;
+    }
 
     std::string dao_generator::gen_func_implement(
             const mapper_function &func)
     {
         std::string code;
 
+        std::string sql = skip_multi_space(
+                replace(skip_all(func.sql_, "\n"),'\t',' '));
+
+
         code += tab + "acl::query query;" + br;
-        code += tab + "query.create_sql(\"" + func.sql_ + "\");" + br;
+        code += tab + "query.create_sql(\"" + sql + "\");" + br;
         code += gen_query_set_parameters(func);
         code += br;
         code += br;
@@ -1807,9 +1918,9 @@ namespace acl
                             customer_order_obj.orders.push_back(orders_obj);
                         */
 
-                        for (size_t i = 0; i < fields2.size(); i++)
+                        for (size_t h = 0; h < fields2.size(); h++)
                         {
-                            field &f2 = fields2[i];
+                            field &f2 = fields2[h];
                             code += tab3 + "if($$" + f2.column_ + ")" + br;
                             code += tab4 + item + "." + f2.name_ + " = ";
                             code += get_assign_code(f2, "$$" + f2.column_) + br;

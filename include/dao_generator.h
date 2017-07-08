@@ -151,6 +151,7 @@ namespace acl
 
             type_t type_;
             std::string sql_;
+            bool sql_mutil_line_;
             std::string declare_;
             std::string name_;
             std::vector<result> columns_;
@@ -177,8 +178,10 @@ namespace acl
         void gen_code(const std::string &path);
         void gen_code_mutil_files(const std::string &path);
     private:
-        void reset_lexer();
         //token lexer
+        void reset_lexer();
+        void store_file_point();
+        void reload_file_point();
         token get_next_token();
         void push_back_token(token t);
 
@@ -230,6 +233,7 @@ namespace acl
         std::vector<field> get_fields(const std::string &name);
         entry get_entry(const std::string &name);
     private:
+        long long int file_offset_;
         int line_num_;
         std::string token_buf_;
         std::list<token> tokens_;
