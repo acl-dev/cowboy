@@ -33,7 +33,7 @@ namespace acl
                 e_equal,            // =
                 e_double_equal,     // ==
                 e_colon,            // :
-                e_colon_colon,      // ::
+                e_double_colon,      // ::
                 e_semicolon,        // ;
                 e_quote,            // '
                 e_double_quote,     // "
@@ -121,6 +121,8 @@ namespace acl
 
             std::string filepath_;
 
+            std::vector<std::string> namespaces_;
+
             //struct map to table. table_name_ is the table name
             std::string table_name_;
 
@@ -167,6 +169,7 @@ namespace acl
             std::vector<mapper_function> mfuncs_;
             std::set<std::string> model_files_;
             std::string mapper_path_;
+            std::vector<std::string> namespaces_;
         };
 
     public:
@@ -176,13 +179,15 @@ namespace acl
         bool parse_path(const std::string &path);
         bool parse_file(const std::string &file_path);
         void gen_code(const std::string &path);
-        void gen_code_mutil_files(const std::string &path);
+        void gen_code_multi_files(const std::string &path);
     private:
         //token lexer
         void reset_lexer();
+        std::string get_string(char end );
         void store_file_point();
         void reload_file_point();
         token get_next_token();
+        token current_token();
         void push_back_token(token t);
 
         std::string next_token(const std::string &delims = " /\r\t\n<>(){};,:=-+.@?&*%");
@@ -194,16 +199,20 @@ namespace acl
         std::string next_line();
 
     private:
-        // syntax parse
+
+        void reset_status();
         bool parse_model_file();
 
+        void skip_comment();
         void parse_include();
+        std::vector<std::string> get_namespace();
         void parse_model_struct();
         void parse_construct_func();
 
         bool parse_mapper_file();
         void parse_mapper_struct();
-        field get_mappper_func_return();
+
+        field get_return_field();
         std::vector<field> get_mapper_func_params();
         std::vector<std::string> get_sql_param();
 
@@ -213,6 +222,16 @@ namespace acl
         std::string gen_class_implement(const mapper &m);
         std::string gen_query_set_parameters(const mapper_function &func);
         std::string get_assign_code(const field &f, const std::string &str);
+
+        std::string get_define_columns(const std::vector<field> &f,
+                                      const std::string &prefix = "",
+                                      const std::string &tabs = "",
+                                      bool br= true);
+
+        std::string get_define_column(const field &f,
+                                      const std::string &prefix = "",
+                                      bool br= true);
+        std::string gen_select_func(const mapper_function &func);
         std::string gen_func_implement(const mapper_function &func);
         std::string get_class_name(const std::string &parent_name);
         std::string gen_class_declare(const mapper &m);
@@ -229,21 +248,29 @@ namespace acl
         std::string get_type(const mapper_function &func);
 
         void entry_reset();
-        bool check_entry(std::string &name);
-        std::vector<field> get_fields(const std::string &name);
-        entry get_entry(const std::string &name);
+        bool check_entry(std::string &name,
+                         const std::vector<std::string> &namespaces);
+        std::vector<field> get_fields(const std::string &name,
+                                      const std::vector<std::string> &nss);
+
+        std::string namespace_to_string(const std::vector<std::string> &nsp);
+        entry get_entry(const std::string &name,
+                        const std::vector<std::string> &nps);
     private:
         long long int file_offset_;
         int line_num_;
         std::string token_buf_;
         std::list<token> tokens_;
+        token current_token_;
 
         std::string line_buffer_;
         std::string current_line_;
 
         acl::ifstream file_;
         std::string file_path_;
-        
+
+        std::vector<std::string> namespaces_;
+
         entry entry_;
         std::vector<entry> entries_;
 
@@ -252,6 +279,6 @@ namespace acl
 
         std::set<std::string> model_files_;
         std::set<std::string> mapper_files_;
-        bool use_strreq_;
+        bool use_streq_;
     };
 }

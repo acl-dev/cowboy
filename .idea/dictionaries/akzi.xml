@@ -2,6 +2,8 @@
   <dictionary name="akzi">
     <words>
       <w>filepath</w>
+      <w>mappper</w>
+      <w>streq</w>
     </words>
   </dictionary>
 </component>

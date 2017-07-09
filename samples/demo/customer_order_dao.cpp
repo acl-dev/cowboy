@@ -31,7 +31,7 @@ customer_order_dao::customer_order_dao(acl::db_handle& handle)
              where c.id=:id and o.customer_id=c.id}*/
 //@Result{column=cid, property=id}
 //@Result{column=oid, property=orders.id}
-bool customer_order_dao::get_customer_order(customer_order_t &obj, int id) 
+bool customer_order_dao:: get_customer_order(customer_order_t &obj, int id) 
 {
 	acl::query query;
 	query.create_sql("select c.id as cid, c.address, c.postcode, c.sex, c.cname, o.id as od, o.code, o.customer_id from customer c, order o where c.id=:id and o.customer_id=c.id");
@@ -62,7 +62,7 @@ bool customer_order_dao::get_customer_order(customer_order_t &obj, int id)
 		const char* $$customer_id = (*row)["customer_id"];
 
 		if($cid)
-			obj.id = atoll($cid);
+			obj.id = atoi($cid);
 		if($address)
 			obj.address = $address;
 		if($postcode)
@@ -72,14 +72,14 @@ bool customer_order_dao::get_customer_order(customer_order_t &obj, int id)
 		if($cname)
 			obj.cname = $cname;
 
-		orders_t $_obj;
+		orders_t $item;
 		if($$oid)
-			$_obj.id = atoi($$oid);
+			$item.id = atoi($$oid);
 		if($$code)
-			$_obj.code = $$code;
+			$item.code = $$code;
 		if($$customer_id)
-			$_obj.customer_id = atoi($$customer_id);
-		obj.orders.push_back($_obj);
+			$item.customer_id = atoi($$customer_id);
+		obj.orders.push_back($item);
 	}
 	return !!db_handle_.length();
 }
@@ -97,7 +97,7 @@ bool customer_order_dao::get_customer_order(customer_order_t &obj, int id)
               where  o.customer_id=c.id}*/
 //@Result{column=cid, property=id}
 //@Result{column=oid, property=orders.id}
-bool customer_order_dao::get_customer_orders(std::list<customer_order_t> &obj) 
+bool customer_order_dao:: get_customer_orders(std::list<customer_order_t> &obj) 
 {
 	acl::query query;
 	query.create_sql("select c.id as cid, c.address, c.postcode, c.sex, c.cname, o.id as oid, o.code, o.customer_id from customer c, orders o where o.customer_id=c.id");
@@ -124,7 +124,7 @@ bool customer_order_dao::get_customer_orders(std::list<customer_order_t> &obj)
 
 
 		if($cid)
-			$item.id = atoll($cid);
+			$item.id = atoi($cid);
 		if($address)
 			$item.address = $address;
 		if($postcode)
@@ -136,7 +136,7 @@ bool customer_order_dao::get_customer_orders(std::list<customer_order_t> &obj)
 
 		for (; i< db_handle_.length(); i++)
 		{
-			orders_t orders_t_item;
+			orders_t $$item;
 			const char* $$oid = (*row)["oid"];
 			const char* $$code = (*row)["code"];
 			const char* $$customer_id = (*row)["customer_id"];
@@ -157,18 +157,18 @@ bool customer_order_dao::get_customer_orders(std::list<customer_order_t> &obj)
 				break;
 			}
 			if($$oid)
-				orders_t_item.id = atoi($$oid);
+				$$item.id = atoi($$oid);
 			if($$code)
-				orders_t_item.code = $$code;
+				$$item.code = $$code;
 			if($$customer_id)
-				orders_t_item.customer_id = atoi($$customer_id);
+				$$item.customer_id = atoi($$customer_id);
 
-			$item.orders.push_back(orders_t_item);
+			$item.orders.push_back($$item);
 
 		}
 
 		obj.push_back($item);
 	}
-	return !!db_handle_.length();
+	return db_handle_.length() != 0;
 }
 

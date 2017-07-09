@@ -57,16 +57,17 @@ int main(int argc, char *argv[])
     {
         gen.print_entries();
     }
+
+    if (mutilfile)
+    {
+        gen.gen_code_multi_files(dest_filepath);
+    }
+    else
+    {
+        gen.gen_code(dest_filepath);
+    }
     try
     {
-        if (mutilfile)
-        {
-            gen.gen_code_mutil_files(dest_filepath);
-        }
-        else
-        {
-            gen.gen_code(dest_filepath);
-        }
     }
     catch (const std::exception&e)
     {

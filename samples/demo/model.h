@@ -9,19 +9,9 @@ struct customer_t
 {
     customer_t()
     {
-        //}}}
-        /*}}}}}*/
-        /*
-        }
-        }
-        }
-        */
-        id = 0;
-        int a = 2;
-        a++;
-
+	id = 0;
     }
-    long long int id;
+    int id;
     std::string address;
 
     //@Column{postcode}

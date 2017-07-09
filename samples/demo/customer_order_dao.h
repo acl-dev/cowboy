@@ -18,7 +18,7 @@ public:
              where c.id=:id and o.customer_id=c.id}*/
 	//@Result{column=cid, property=id}
 	//@Result{column=oid, property=orders.id}
-	virtual bool get_customer_order(customer_order_t &obj, int id) ;
+	virtual bool  get_customer_order(customer_order_t &obj, int id) ;
 
 	/*@Select{select 
                c.id as cid,
@@ -33,7 +33,7 @@ public:
               where  o.customer_id=c.id}*/
 	//@Result{column=cid, property=id}
 	//@Result{column=oid, property=orders.id}
-	virtual bool get_customer_orders(std::list<customer_order_t> &obj) ;
+	virtual bool  get_customer_orders(std::list<customer_order_t> &obj) ;
 
 private:
 	acl::db_handle& db_handle_;

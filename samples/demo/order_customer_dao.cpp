@@ -22,7 +22,7 @@ order_customer_dao::order_customer_dao(acl::db_handle& handle)
               where o.id=:id and o.customer_id = c.id}*/
 //@Result{column=cid, property=customer.id}
 //@Result{column=oid, property=id}
-bool order_customer_dao::get_order_customer(order_customer_t &obj, int id) 
+bool order_customer_dao:: get_order_customer(order_customer_t &obj, int id) 
 {
 	acl::query query;
 	query.create_sql("select c.id as cid, c.address, c.postcode, c.sex, c.cname, o.id as oid, o.code, o.customer_id from customer c, orders o where o.id=:id and o.customer_id = c.id");
@@ -60,7 +60,7 @@ bool order_customer_dao::get_order_customer(order_customer_t &obj, int id)
 			obj.customer_id = atoi($customer_id);
 
 		if($$cid)
-			obj.customer.id = atoll($$cid);
+			obj.customer.id = atoi($$cid);
 		if($$address)
 			obj.customer.address = $$address;
 		if($$postcode)
@@ -86,7 +86,7 @@ bool order_customer_dao::get_order_customer(order_customer_t &obj, int id)
               where o.customer_id = c.id}*/
 //@Result{column=cid, property=customer.id}
 //@Result{column=oid, property=id}
-bool order_customer_dao::get_order_customers(std::list<order_customer_t> &obj) 
+bool order_customer_dao:: get_order_customers(std::list<order_customer_t> &obj) 
 {
 	acl::query query;
 	query.create_sql("select c.id as cid, c.address, c.postcode, c.sex, c.cname, o.id as oid, o.code, o.customer_id from customer c, orders o where o.customer_id = c.id");
@@ -124,7 +124,7 @@ bool order_customer_dao::get_order_customers(std::list<order_customer_t> &obj)
 			$item.customer_id = atoi($customer_id);
 
 		if($$cid)
-			$item.customer.id = atoll($$cid);
+			$item.customer.id = atoi($$cid);
 		if($$address)
 			$item.customer.address = $$address;
 		if($$postcode)
@@ -136,7 +136,7 @@ bool order_customer_dao::get_order_customers(std::list<order_customer_t> &obj)
 
 		obj.push_back($item);
 	}
-	return !!db_handle_.length();
+	return db_handle_.length() != 0;
 }
 
 /*@Select{select 
@@ -152,7 +152,7 @@ bool order_customer_dao::get_order_customers(std::list<order_customer_t> &obj)
  	   where o.customer_id = c.id and c.cname = :name}*/
 //@Result{column=cid, property=customer.id}
 //@Result{column=oid, property=id}
-bool order_customer_dao::get_order_customers_by_name(std::list<order_customer_t> &obj,const std::string & name) 
+bool order_customer_dao:: get_order_customers_by_name(std::list<order_customer_t> &obj,const std::string & name) 
 {
 	acl::query query;
 	query.create_sql("select c.id as cid, c.address, c.postcode, c.sex, c.cname, o.id as oid, o.code, o.customer_id from customer c, orders o where o.customer_id = c.id and c.cname = :name");
@@ -192,7 +192,7 @@ bool order_customer_dao::get_order_customers_by_name(std::list<order_customer_t>
 			$item.customer_id = atoi($customer_id);
 
 		if($$cid)
-			$item.customer.id = atoll($$cid);
+			$item.customer.id = atoi($$cid);
 		if($$address)
 			$item.customer.address = $$address;
 		if($$postcode)
@@ -204,6 +204,6 @@ bool order_customer_dao::get_order_customers_by_name(std::list<order_customer_t>
 
 		obj.push_back($item);
 	}
-	return !!db_handle_.length();
+	return db_handle_.length() != 0;
 }
 

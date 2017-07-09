@@ -11,7 +11,7 @@ customer_dao::customer_dao(acl::db_handle& handle)
 
 /*@Insert{insert into customer(address,postcode,sex,cname) 
 							values (:address,:postcode,:sex,:cname)}*/
-bool customer_dao::insert(const customer_t &obj) 
+bool customer_dao:: insert(const customer_t &obj) 
 {
 	acl::query query;
 	query.create_sql("insert into customer(address,postcode,sex,cname) values (:address,:postcode,:sex,:cname)");
@@ -38,7 +38,7 @@ bool customer_dao::insert(const customer_t &obj)
 }
 
 //@Delete{delete from customer where id=:id}
-bool customer_dao::delete_by_id(int id) 
+bool customer_dao:: delete_by_id(int id) 
 {
 	acl::query query;
 	query.create_sql("delete from customer where id=:id");
@@ -68,7 +68,7 @@ bool customer_dao::delete_by_id(int id)
                 sex=:sex,
                 cname=:cname 
                where id=:id}*/
-bool customer_dao::update(const customer_t &obj) 
+bool customer_dao:: update(const customer_t &obj) 
 {
 	acl::query query;
 	query.create_sql("update customer set address=:address, postcode=:postcode, sex=:sex, cname=:cname where id=:id");
@@ -96,7 +96,7 @@ bool customer_dao::update(const customer_t &obj)
 }
 
 //@Update{update customer set address=:new_address where id=:id}
-bool customer_dao::update_address(const customer_t &obj,const std::string &new_address) 
+bool customer_dao:: update_address(const customer_t &obj,const std::string &new_address) 
 {
 	acl::query query;
 	query.create_sql("update customer set address=:new_address where id=:id");
@@ -121,7 +121,7 @@ bool customer_dao::update_address(const customer_t &obj,const std::string &new_a
 }
 
 //@Select{select * from customer where id=:id}
-bool customer_dao::select_by_id(customer_t &obj, int id) 
+bool customer_dao:: select_by_id(customer_t &obj, int id) 
 {
 	acl::query query;
 	query.create_sql("select * from customer where id=:id");
@@ -148,7 +148,7 @@ bool customer_dao::select_by_id(customer_t &obj, int id)
 		const char* $cname = (*row)["cname"];
 
 		if($id)
-			obj.id = atoll($id);
+			obj.id = atoi($id);
 		if($address)
 			obj.address = $address;
 		if($postcode)

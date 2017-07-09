@@ -11,7 +11,7 @@ orders_dao::orders_dao(acl::db_handle& handle)
 
 /*@Insert{insert into order(code,customer_id)
                         values (:code,:customer_id)}*/
-bool orders_dao::insert(const orders_t &obj) 
+bool orders_dao:: insert(const orders_t &obj) 
 {
 	acl::query query;
 	query.create_sql("insert into order(code,customer_id) values (:code,:customer_id)");
@@ -36,7 +36,7 @@ bool orders_dao::insert(const orders_t &obj)
 }
 
 //@Delete{delete from order where id=:id}
-bool orders_dao::delete_by_id(int id) 
+bool orders_dao:: delete_by_id(int id) 
 {
 	acl::query query;
 	query.create_sql("delete from order where id=:id");
@@ -64,7 +64,7 @@ bool orders_dao::delete_by_id(int id)
                   code=:code,
                   customer_id=:customer_id 
                 where id=:id}*/
-bool orders_dao::update(const orders_t &obj) 
+bool orders_dao:: update(const orders_t &obj) 
 {
 	acl::query query;
 	query.create_sql("update order set code=:code, customer_id=:customer_id where id=:id");
@@ -90,7 +90,7 @@ bool orders_dao::update(const orders_t &obj)
 }
 
 //@Select{select * from order where id=:id}
-bool orders_dao::select_by_id(orders_t &obj, int id) 
+bool orders_dao:: select_by_id(orders_t &obj, int id) 
 {
 	acl::query query;
 	query.create_sql("select * from order where id=:id");
@@ -125,7 +125,7 @@ bool orders_dao::select_by_id(orders_t &obj, int id)
 }
 
 //@Select{select * from order where cname=:name}
-bool orders_dao::select_by_name(std::list<orders_t> &obj, std::string &name) 
+bool orders_dao:: select_by_name(std::list<orders_t> &obj, std::string &name) 
 {
 	acl::query query;
 	query.create_sql("select * from order where cname=:name");
@@ -160,11 +160,11 @@ bool orders_dao::select_by_name(std::list<orders_t> &obj, std::string &name)
 
 		obj.push_back($item);
 	}
-	return !!db_handle_.length();
+	return db_handle_.length() != 0;
 }
 
 //@Select{select * from order where customer_id=:cid}
-bool orders_dao::get_customer_ordors(std::list<orders_t> &obj, int cid) 
+bool orders_dao:: get_customer_ordors(std::list<orders_t> &obj, int cid) 
 {
 	acl::query query;
 	query.create_sql("select * from order where customer_id=:cid");
@@ -199,11 +199,11 @@ bool orders_dao::get_customer_ordors(std::list<orders_t> &obj, int cid)
 
 		obj.push_back($item);
 	}
-	return !!db_handle_.length();
+	return db_handle_.length() != 0;
 }
 
 //@Select{select * from order where customer_id=:cid and code !=:code}
-bool orders_dao::get_customer_ordors_without(std::list<orders_t> &obj, int cid, const std::string &code) 
+bool orders_dao:: get_customer_ordors_without(std::list<orders_t> &obj, int cid, const std::string &code) 
 {
 	acl::query query;
 	query.create_sql("select * from order where customer_id=:cid and code !=:code");
@@ -239,6 +239,6 @@ bool orders_dao::get_customer_ordors_without(std::list<orders_t> &obj, int cid, 
 
 		obj.push_back($item);
 	}
-	return !!db_handle_.length();
+	return db_handle_.length() != 0;
 }
 
