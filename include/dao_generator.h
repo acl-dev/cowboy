@@ -190,8 +190,10 @@ namespace acl
         token current_token();
         void push_back_token(token t);
 
-        std::string next_token(const std::string &delims = " /\r\t\n<>(){};,:=-+.@?&*%");
-        std::string look_ahead(const std::string &delims = " /\r\t\n<>(){};,:=-+.@?&*%");
+        std::string next_token(const std::string &delims =
+                                    " /\r\t\n<>(){};,:=-+.@?&*%");
+        std::string look_ahead(const std::string &delims =
+                                    " /\r\t\n<>(){};,:=-+.@?&*%");
         void skip_space();
         void skip_space(std::string &line);
         void skip(std::string &line, const std::string &delims);
@@ -231,12 +233,13 @@ namespace acl
         std::string get_define_column(const field &f,
                                       const std::string &prefix = "",
                                       bool br= true);
-        std::string gen_select_func(const mapper_function &func);
         std::string gen_func_implement(const mapper_function &func);
         std::string get_class_name(const std::string &parent_name);
         std::string gen_class_declare(const mapper &m);
-        std::string gen_annotation(const mapper_function &func,bool tab = true);
-        std::string gen_func_impl_name(const std::string &class_name, const std::string &declare_);
+        std::string gen_annotation(const mapper_function &func,
+                                   bool tab = true);
+        std::string gen_func_impl_name(const std::string &class_name,
+                                       const std::string &declare_);
         std::string gen_streq_code()const;
 
 

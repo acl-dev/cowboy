@@ -611,34 +611,31 @@ namespace acl
     {
 
         reset_lexer();
-
-        if (!file_.open_read(file_path.c_str()))
-        {
-            printf("open file error %s\n", acl::last_serror());
-            return false;
-        }
-        file_path_ = file_path;
-        token _token = get_next_token();
-        if (_token.type_ == token::e_comment)
-        {
-            _token = get_next_token();
-            if (_token.type_ == token::e_$models)
-            {
-                model_files_.insert(file_path);
-                return parse_model_file();
-            }
-            else
-            {
-                mapper_files_.insert(file_path);
-                return parse_mapper_file();
-            }
-        }
-        return false;
-
+        reset_status();
         try
         {
-
-
+            if (!file_.open_read(file_path.c_str()))
+            {
+                printf("open file error %s\n", acl::last_serror());
+                return false;
+            }
+            file_path_ = file_path;
+            token t = get_next_token();
+            if (t.type_ == token::e_comment)
+            {
+                t = get_next_token();
+                if (t.type_ == token::e_$models)
+                {
+                    model_files_.insert(file_path);
+                    return parse_model_file();
+                }
+                else
+                {
+                    mapper_files_.insert(file_path);
+                    return parse_mapper_file();
+                }
+            }
+            return false;
         }catch (std::exception &e)
         {
             printf("%s\n", e.what());
@@ -1266,30 +1263,30 @@ namespace acl
                 t.type_ == token::e_$delete ||
                 t.type_ == token::e_$select)
             {
-                mapper_function mfunc;
+                mapper_function func;
 
-                mfunc.type_ = mapper_function::e_insert;
+                func.type_ = mapper_function::e_insert;
                 if (t.type_ == token::e_$update)
-                    mfunc.type_ = mapper_function::e_update;
+                    func.type_ = mapper_function::e_update;
                 else if (t.type_ == token::e_$delete)
-                    mfunc.type_ = mapper_function::e_delete;
+                    func.type_ = mapper_function::e_delete;
                 else if (t.type_ == token::e_$select)
-                    mfunc.type_ = mapper_function::e_select;
+                    func.type_ = mapper_function::e_select;
 
                 if (get_next_token().type_ != token::e_open_curly_brace)
                     throw syntax_error();
 
-                mfunc.sql_mutil_line_ = mutil_line;
+                func.sql_mutil_line_ = mutil_line;
                 if(!mutil_line)
                 {
-                    mfunc.sql_ += line_buffer_.
+                    func.sql_ += line_buffer_.
                             substr(0,line_buffer_.find_last_of('}'));
-                    mfunc.sql_params_ = get_sql_param();
+                    func.sql_params_ = get_sql_param();
                 }
                 else
                 {
-                    mfunc.sql_ = get_string('}');
-                    mfunc.sql_params_ = get_sql_param();
+                    func.sql_ = get_string('}');
+                    func.sql_params_ = get_sql_param();
                     while(get_next_token().type_ != token::e_comment_end);
                 }
 
@@ -1302,7 +1299,7 @@ namespace acl
                 if (t2.type_ == token::e_comment &&
                     t3.type_ == token::e_$result)
                 {
-                    mfunc.columns_ = get_result_columns();
+                    func.columns_ = get_result_columns();
 
                     //skip buffer_line_ to function name;
                     t2 = get_next_token();
@@ -1315,25 +1312,25 @@ namespace acl
                 //skip to virtual bool;
                 while (get_next_token().type_ != token::e_virtual);
 
-                mfunc.declare_ = "virtual bool " + get_string('=');
+                func.declare_ = "virtual bool " + get_string('=');
 
 
-                mfunc.return_ = get_return_field();
-                if (mfunc.return_.type_ != field::e_bool)
+                func.return_ = get_return_field();
+                if (func.return_.type_ != field::e_bool)
                     throw syntax_error("function return type must be bool ");
 
                 //get function name;
                 t = get_next_token();
-                mfunc.name_ = t.str_;
+                func.name_ = t.str_;
 
-                mfunc.params_ = get_mapper_func_params();
-                if (mfunc.type_ == mapper_function::e_select)
+                func.params_ = get_mapper_func_params();
+                if (func.type_ == mapper_function::e_select)
                 {
-                    if (mfunc.params_.empty())
+                    if (func.params_.empty())
                         throw syntax_error("{select} type function params "
                                                    "must not empty");
                 }
-                update_mapper_function_columns(mfunc);
+                update_mapper_function_columns(func);
                 t = get_next_token();
                 if (t.type_ != t.e_equal)
                     throw syntax_error();
@@ -1342,7 +1339,7 @@ namespace acl
                 if (get_next_token().type_ != token::e_semicolon)
                     throw syntax_error();
 
-                mapper_.mfuncs_.push_back(mfunc);
+                mapper_.mfuncs_.push_back(func);
             }
             else if (t.type_ == token::e_close_curly_brace)
             {
@@ -1636,11 +1633,11 @@ namespace acl
 
                 if (f.type_ == field::e_entry)
                 {
-                    std::vector<field> fileds = f.entry_->fields_;
+                    std::vector<field> fields = f.entry_->fields_;
 
-                    for (size_t k = 0; k < fileds.size(); k++)
+                    for (size_t k = 0; k < fields.size(); k++)
                     {
-                        field &f2 = fileds[k];
+                        field &f2 = fields[k];
                         if (f2.column_ == param)
                         {
                             code += f.name_ + "." + f2.column_;
@@ -1747,10 +1744,6 @@ namespace acl
         return buffer;
     }
 
-    std::string dao_generator::gen_select_func(const mapper_function &func)
-    {
-
-    }
     std::string dao_generator::get_define_columns(
             const std::vector<field> &fields,
             const std::string &prefix,
@@ -2546,6 +2539,4 @@ namespace acl
         }
         return  true;
     }
-
-
 }
