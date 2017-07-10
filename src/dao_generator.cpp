@@ -1774,7 +1774,7 @@ namespace acl
         std::string code;
 
         std::string sql = skip_multi_space(
-                replace(skip_all(func.sql_, "\n"),'\t',' '));
+                replace(skip_all(func.sql_, "\r\n"),'\t',' '));
 
 
         code += tab + "acl::query query;" + br;
