@@ -2,7 +2,6 @@
 #pragma once
 #include <string>
 #include <list>
-
 //@Model
 //@Table{customer}
 struct customer_t
