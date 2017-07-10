@@ -54,18 +54,19 @@ namespace acl
         if (buffer.size() != str.size())
             str = buffer;
     }
-    std::string model_generator::next_token(const std::string &delims)
+    std::string model_generator::next_token(const std::string &delimiters)
     {
         std::string buffer;
         skip(line_buffer_, " \t\r\n", false);
-        do
+
+        while(line_buffer_.empty())
         {
             if (line_buffer_.empty())
                 line_buffer_ = next_line();
             if (line_buffer_.empty())
                 return buffer;
             skip(line_buffer_," \t\r\n", false);
-        } while (true);
+        }
 
         for (size_t i = 0; i < line_buffer_.size(); i++)
         {
@@ -126,7 +127,7 @@ namespace acl
         }
 
 
-        std::string str = next_token();
+        std::string str = next_token(" \r\n\t,()=`;-/");
 
         t.str_ = str;
         str = lower_case(str);
@@ -287,11 +288,14 @@ namespace acl
         {
             t.type_ = token::e_integer;
         }
+        else if(str == "unsigned")
+        {
+            t.type_ = token::e_unsigned;
+        }
         else if (str == "int")
         {
             t.type_ = token::e_int;
         }
-
         else if (str == "bigint")
         {
             t.type_ = token::e_bigint;
@@ -379,6 +383,193 @@ namespace acl
         current_token_ = t;
 
         return t;
+    }
+    token model_generator::current_token()
+    {
+        return current_token_;
+    }
+    field::type model_generator::to_field_type(const token& t)
+    {
+        switch (t.type_)
+        {
+            case token::e_mediumint:
+            case token::e_int:
+            case token::e_integer:
+                return field::e_int;
+            case token::e_smallint:
+                return field::e_char;
+            case token::e_smallint:
+                return field::e_short;
+            case token::e_bigint:
+                return field::e_long_long_int;
+            case token::e_double:
+            case token::e_decimal:
+                return field::e_double;
+            case token::e_float:
+                return field::e_float;
+
+            case token::e_date:
+            case token::e_datetime:
+            case token::e_year:
+            case token::e_time:
+
+            case token::e_char:
+            case token::e_varchar:
+            case token::e_text:
+            case token::e_tinytext:
+            case token::e_blob:
+            case token::e_mediumblob:
+            case token::e_mediumtext:
+            case token::e_longtext:
+            case token::e_longblob:
+                return field::e_std_string;
+            default:
+                throw syntax_error("unknown type " + t.type_);
+        }
+        return field::e_void;
+    }
+    std::string model_generator::get_default()
+    {
+        std::string buffer;
+        token t = get_next_token();
+        if(t.type_ == token::e_quote ||
+                t.type_ == token::e_double_quote)
+        {
+            buffer = next_token("'");
+            line_buffer_ = line_buffer_.substr(buffer.size());
+
+        }else
+        {
+            ///todo check if str_ is function,eg:now()
+            buffer = t.str_;
+        }
+        return buffer;
+    }
+    std::string model_generator::get_string()
+    {
+        token t = get_next_token();
+
+        if(t.type_ == token::e_backtick)
+        {
+            token t1 = get_next_token();
+            token t2 = get_next_token();
+            if(t2.type_ == token::e_backtick)
+            {
+                return t1.str_;
+            }
+            else
+            {
+                throw syntax_error();
+            }
+        }else if(t.type_ == token::e_identifier)
+        {
+             return t.str_;
+        }
+        return std::string();
+    }
+
+    model_generator::field model_generator::parse_field()
+    {
+        field f;
+
+        f.name_ = get_string();
+        f.type_ = to_field_type(get_next_token());
+
+        token t = get_next_token();
+        if(t.type_ == token::e_unsigned)
+        {
+            f.unsigned_ = true;
+            t = get_next_token();
+        }
+
+        //eg: varchar(255)
+        if(t.type_ == token::e_open_paren)
+        {
+            t = get_next_token();
+            while(t.type_ != token::e_close_paren)
+            {
+                t = get_next_token();
+            }
+        }
+
+        while(t.type_ != token::e_comma)
+        {
+            if(t.type_ == token::e_primary)
+            {
+                t = get_next_token();
+                if(t.type_ == token::e_key)
+                {
+                    f.primary_key_ = true;
+                }
+
+            }else if(t.type_ == token::e_auto_increase)
+            {
+                f.auto_increase_ = true;
+            }
+            else if(t.type_ == token::e_not)
+            {
+                t = get_next_token();
+                if(t.type_ == token::e_null)
+                {
+                    f.not_null_ = true;
+                }
+                else
+                {
+                    throw syntax_error("unknown token " + t.str_);
+                }
+            }
+            else if(t.type_ == token::e_default)
+            {
+                f.default_ = get_default();
+            }
+            else if(t.type_ == token::e_unique)
+            {
+                f.unique_ = true;
+            }
+            else
+            {
+                std::cout << t.str_ << std::endl;
+            }
+        }
+
+        return f;
+    }
+    void model_generator::parse_table()
+    {
+        table1_.name_ = get_string();
+
+        t = get_next_token();
+        if(t.type_ != token::e_open_paren)
+            throw syntax_error();
+
+        t = get_next_token();
+
+        while(t.type_ != token::e_close_paren)
+        {
+            field f = parse_field();
+            table1_.fields_.push_back(f);
+        }
+
+    }
+    void model_generator::parse()
+    {
+        do
+        {
+            token t = get_next_token();
+            if(t.e_double_sub)
+            {
+
+            }
+            else if(t.type_ == token::e_create)
+            {
+                t = get_next_token();
+                if(t.type_ == token::e_table)
+                {
+                    table1_ = table();
+                    parse_table();
+                }
+            }
+        }while(true);
     }
     bool model_generator::parse_sql(const std::string &file_path)
     {
