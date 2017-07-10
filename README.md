@@ -1,4 +1,5 @@
-## what is dao_generator ?
+## what is cowboy ?
+cowboy is c++ orm working boy :)
 it parse models and mappers and then generate dao files.
 it like myBatis. but without verbose xml config files
 
@@ -10,17 +11,17 @@ cd acl
 make build_one
 
 ```
-build dao_generator.it depend on acl. run "cmake . -DACL_ROOT=acl_path" to generate CMakeFile. and acl_path is acl's path.eg:
+build cowboy.it depend on acl. run "cmake . -DACL_ROOT=acl_path" to generate CMakeFile. and acl_path is acl's path.eg:
 /home/akzi/code/acl/
 ```
-git clone https://github.com/acl-dev/dao_generator.git
-cd dao_generator
+git clone https://github.com/acl-dev/cowboy.git
+cd cowboy
 mkdir cmake_build
 cd cmake_build 
 cmake .. -DACL_ROOT=acl_path
 ```
 ## how it work?
-dao_generator parse model files and mappers,and generate c++ code.
+cowboy parse model files and mappers,and generate c++ code.
 
 ## how to use
 * first define models
