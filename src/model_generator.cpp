@@ -1,19 +1,18 @@
 #include <iostream>
-#include <stdexcept>
-#include "acl_cpp/lib_acl.hpp"
-#include "lib_acl.h"
+#include "common.hpp"
+#include "syntax_error.hpp"
 #include "model_generator.h"
+
+#define br  std::string("\r\n")
+#define br2  std::string("\r\n\r\n")
+#define tab std::string("\t")
+#define tab2 std::string("\t\t")
+#define tab3  std::string("\t\t\t")
+#define tab4  std::string("\t\t\t\t")
+
+
 namespace acl
 {
-    struct syntax_error :std::logic_error
-    {
-        syntax_error(const std::string &error = "syntax_error")
-            :std::logic_error(error) 
-        {
-
-        }
-    };
-
     model_generator::model_generator()
     {
         lines_ = 0;
@@ -37,10 +36,10 @@ namespace acl
 
         do
         {
-            for (size_t i = 0; i < data; ++i)
+            for (size_t i = 0; i < data.size(); ++i)
             {
                 char ch = data[i];
-                if(ch != end)
+                if (ch != end)
                 {
                     buffer.push_back(ch);
                 }
@@ -51,53 +50,28 @@ namespace acl
                     return buffer;
                 }
             }
-            buffer = next_line();
-        }while(true);
+            data = next_line();
+        } while (true);
     }
-    void skip(std::string &str, 
-              const std::string &skip_chars, 
-              bool skip_all)
-    {
-        if (str.empty())
-            return;
-        std::string buffer;
-        for (size_t i = 0; i < str.size(); i++)
-        {
-            char ch = str[i];
-            if (skip_chars.find(ch) == skip_chars.npos)
-            {
-                if (!skip_all && i > 0)
-                {
-                    str = str.substr(i);
-                    return;
-                }
-                else
-                {
-                    buffer.push_back(ch);
-                }
-            }                
-        }
-        if (buffer.size() != str.size())
-            str = buffer;
-    }
+
     std::string model_generator::next_token(const std::string &delimiters)
     {
         std::string buffer;
-        skip(line_buffer_, " \t\r\n", false);
+        skip(line_buffer_, " \t\r\n");
 
-        while(line_buffer_.empty())
+        while (line_buffer_.empty())
         {
             if (line_buffer_.empty())
                 line_buffer_ = next_line();
             if (line_buffer_.empty())
                 return buffer;
-            skip(line_buffer_," \t\r\n", false);
+            skip(line_buffer_, " \t\r\n");
         }
 
         for (size_t i = 0; i < line_buffer_.size(); i++)
         {
             char ch = line_buffer_[i];
-            if (delims.find(ch) == delims.npos)
+            if (delimiters.find(ch) == delimiters.npos)
             {
                 buffer.push_back(ch);
             }
@@ -113,23 +87,7 @@ namespace acl
         line_buffer_ = line_buffer_.substr(buffer.size());
         return buffer;
     }
-    std::string lower_case(const std::string &str)
-    {
-        std::string lower_str;
-        for (size_t i = 0; i < str.size(); i++)
-        {
-            char ch = str[i];
-            if (ch >= 'A' && ch <= 'Z')
-            {
-                lower_str.push_back(ch + ('a' - 'A'));
-            }
-            else
-            {
-                lower_str.push_back(ch);
-            }
-        }
-        return lower_str;
-    }
+
     char model_generator::look_ahead()
     {
         if (line_buffer_.empty())
@@ -141,6 +99,10 @@ namespace acl
 
         return line_buffer_[0];
     }
+    void model_generator::push_back_token(const token&t)
+    {
+        tokens_.push_back(t);
+    }
     model_generator::token model_generator::get_next_token()
     {
         token t;
@@ -151,17 +113,22 @@ namespace acl
             current_token_ = t;
             return t;
         }
+        const std::string delimiters = " \r\n\t,()=`;-/";
 
-
-        std::string str = next_token(" \r\n\t,()=`;-/");
+        std::string str = next_token(delimiters);
 
         t.str_ = str;
         str = lower_case(str);
 
-        if (str == "-")
+        if (str.empty())
+        {
+            t.type_ = token::e_eof;
+        }
+        else if (str == "-")
         {
             if (look_ahead() == '-')
             {
+                next_token(delimiters);
                 t.type_ = token::e_double_sub;
                 t.str_ = "--";
             }
@@ -174,8 +141,22 @@ namespace acl
         {
             if (look_ahead() == '*')
             {
+                next_token(delimiters);
                 t.type_ = token::e_comment_begin;
                 t.str_ = "/*";
+            }
+            else
+            {
+                t.type_ = token::e_sub;
+            }
+        }
+        else if (str == "*")
+        {
+            if (look_ahead() == '/')
+            {
+                next_token(delimiters);
+                t.type_ = token::e_comment_end;
+                t.str_ = "*/";
             }
             else
             {
@@ -234,9 +215,9 @@ namespace acl
         {
             t.type_ = token::e_primary;
         }
-        else if (str == "auto_increase")
+        else if (str == "auto_increment")
         {
-            t.type_ = token::e_auto_increase;
+            t.type_ = token::e_auto_increment;
         }
         else if (str == "if")
         {
@@ -288,7 +269,7 @@ namespace acl
         }
         else if (str == "comment")
         {
-            t.type_ = token::e_comment;
+            t.type_ = token::e_sql_comment;
         }
         else if (str == "key")
         {
@@ -314,7 +295,7 @@ namespace acl
         {
             t.type_ = token::e_integer;
         }
-        else if(str == "unsigned")
+        else if (str == "unsigned")
         {
             t.type_ = token::e_unsigned;
         }
@@ -402,28 +383,31 @@ namespace acl
         {
             t.type_ = token::e_year;
         }
-        else 
+        else
         {
             t.type_ = token::e_identifier;
         }
+        t.line_ = lines_;
         current_token_ = t;
 
         return t;
     }
-    token model_generator::current_token()
+    model_generator::token
+        model_generator::current_token()
     {
         return current_token_;
     }
-    field::type model_generator::to_field_type(const token& t)
+    model_generator::field::type
+        model_generator::to_field_type(const token& t)
     {
         switch (t.type_)
         {
+            case token::e_tinyint:
+                return field::e_char;
             case token::e_mediumint:
             case token::e_int:
             case token::e_integer:
                 return field::e_int;
-            case token::e_smallint:
-                return field::e_char;
             case token::e_smallint:
                 return field::e_short;
             case token::e_bigint:
@@ -454,69 +438,69 @@ namespace acl
         }
         return field::e_void;
     }
-    std::string model_generator::get_default()
+    std::string model_generator::get_string()
     {
         std::string buffer;
         token t = get_next_token();
-        if(t.type_ == token::e_quote ||
-                t.type_ == token::e_double_quote)
+        if (t.type_ == token::e_quote)
         {
             buffer = next_token("'");
-            line_buffer_ = line_buffer_.substr(buffer.size());
-
-        }else
+        }
+        else if (t.type_ == token::e_double_quote)
         {
-            ///todo check if str_ is function,eg:now()
-            buffer = t.str_;
+            buffer = next_token("\"");
+        }
+        else if (t.type_ == token::e_now)
+        {
+            if (get_next_token().type_ == token::e_open_paren &&
+                get_next_token().type_ == token::e_close_paren)
+                buffer = t.str_ + "()";
+            else
+            {
+
+            }
         }
         return buffer;
     }
-    std::string model_generator::get_string()
+    std::string model_generator::get_name()
     {
         token t = get_next_token();
 
-        if(t.type_ == token::e_backtick)
+        if (t.type_ == token::e_backtick)
         {
             token t1 = get_next_token();
             token t2 = get_next_token();
-            if(t2.type_ == token::e_backtick)
-            {
-                return t1.str_;
-            }
-            else
-            {
+            if (t2.type_ != token::e_backtick)
                 throw syntax_error();
-            }
-        }else if(t.type_ == token::e_identifier)
-        {
-             return t.str_;
+
+            return t1.str_;
         }
-        return std::string();
+        return t.str_;
     }
 
     model_generator::field model_generator::parse_field()
     {
         field f;
 
-        f.name_ = get_string();
+        f.name_ = get_name();
         f.type_ = to_field_type(get_next_token());
 
         token t = get_next_token();
-        if(t.type_ == token::e_unsigned)
+        if (t.type_ == token::e_unsigned)
         {
             f.unsigned_ = true;
             t = get_next_token();
         }
 
         //eg: varchar(255) or double(10,10)
-        if(t.type_ == token::e_open_paren)
+        if (t.type_ == token::e_open_paren)
         {
             t = get_next_token();
             f.type_len_.append(t.str_);
-            while(true)
+            while (true)
             {
                 t = get_next_token();
-                if(t.type_ == token::e_close_paren)
+                if (t.type_ == token::e_close_paren)
                 {
                     t = get_next_token();
                     break;
@@ -526,24 +510,25 @@ namespace acl
             }
         }
 
-        while(t.type_ != token::e_comma)
+        while (t.type_ != token::e_comma)
         {
-            if(t.type_ == token::e_primary)
+            if (t.type_ == token::e_primary)
             {
                 t = get_next_token();
-                if(t.type_ == token::e_key)
+                if (t.type_ == token::e_key)
                 {
                     f.primary_key_ = true;
                 }
 
-            }else if(t.type_ == token::e_auto_increase)
+            }
+            else if (t.type_ == token::e_auto_increment)
             {
                 f.auto_increase_ = true;
             }
-            else if(t.type_ == token::e_not)
+            else if (t.type_ == token::e_not)
             {
                 t = get_next_token();
-                if(t.type_ == token::e_null)
+                if (t.type_ == token::e_null)
                 {
                     f.not_null_ = true;
                 }
@@ -552,46 +537,82 @@ namespace acl
                     throw syntax_error("unknown token " + t.str_);
                 }
             }
-            else if(t.type_ == token::e_default)
+            else if (t.type_ == token::e_default)
             {
-                f.default_ = get_default();
+                f.default_ = get_string();
             }
-            else if(t.type_ == token::e_unique)
+            else if (t.type_ == token::e_unique)
             {
                 f.unique_ = true;
+            }
+            else if (t.type_ == token::e_sql_comment)
+            {
+                f.comment_ = get_string();
             }
             else
             {
                 std::cout << t.str_ << std::endl;
             }
+            t = get_next_token();
         }
 
         return f;
     }
     void model_generator::parse_table()
     {
-        table1_.name_ = get_string();
+        table_.name_ = get_name();
 
         token t = get_next_token();
-        if(t.type_ != token::e_open_paren)
+        if (t.type_ != token::e_open_paren)
             throw syntax_error();
 
         t = get_next_token();
 
-        while(t.type_ != token::e_semicolon)
+        while (t.type_ != token::e_semicolon)
         {
-            if(t.type_ == token::e_backtick ||
-                    t.type_ == token::e_identifier)
+            if (t.type_ == token::e_backtick ||
+                t.type_ == token::e_identifier)
             {
+                push_back_token(t);
                 field f = parse_field();
-                table1_.fields_.push_back(f);
+                table_.fields_.push_back(f);
             }
-            else if(t.type_ == token::e_primary)
+            else if (t.type_ == token::e_primary)
             {
                 t = get_next_token();
-                if(t.type_ != token::e_key)
-                    throw syntax_error("unknown token "+ t.str_);
+                if (t.type_ != token::e_key)
+                    throw syntax_error("unknown token " + t.str_);
+                t = get_next_token();
+                if (t.type_ != token::e_open_paren)
+                    throw syntax_error("unknown token " + t.str_);
+                table_.primary_key_ = get_name();
+                t = get_next_token();
+                if (t.type_ != token::e_close_paren)
+                    throw syntax_error("unknown token " + t.str_);
             }
+            else if (t.type_ == token::e_engine)
+            {
+                t = get_next_token();
+                if (t.type_ == token::e_eq)
+                {
+                    table_.engine_ = get_next_token().str_;
+                }
+            }
+            else if (t.type_ == token::e_auto_increment)
+            {
+                get_next_token();
+                table_.auto_increment_ = get_next_token().str_;
+            }
+            else if (t.type_ == token::e_default)
+            {
+                t = get_next_token();
+                if (t.type_ == token::e_charset)
+                {
+                    get_next_token();
+                    table_.charset_ = get_next_token().str_;
+                }
+            }
+            t = get_next_token();
         }
 
     }
@@ -600,35 +621,437 @@ namespace acl
         do
         {
             token t = get_next_token();
-            if(t.type_ == token::e_double_sub)
+            if (t.type_ == token::e_double_sub)
             {
                 line_buffer_.clear();
             }
-            else if(t.type_ == token::e_comment_begin)
+            else if (t.type_ == token::e_comment_begin)
             {
-                while(t.type_ != token::e_comment_end)
+                while (t.type_ != token::e_comment_end)
                     t = get_next_token();
             }
-            else if(t.type_ == token::e_create)
+            else if (t.type_ == token::e_create)
             {
                 t = get_next_token();
-                if(t.type_ == token::e_table)
+                if (t.type_ == token::e_table)
                 {
-                    table1_ = table();
-                    table1_.sql_  = get_string(';');
-                    table1_.sql_.push_back(';');
+                    table_ = table();
+                    table_.sql_ = get_string(';');
+                    table_.sql_.push_back(';');
 
                     parse_table();
+                    tables_.push_back(table_);
                 }
             }
-        }while(true);
+            else if (t.type_ == token::e_eof)
+            {
+                return;
+            }
+        } while (true);
     }
-    bool model_generator::parse_sql(const std::string &file_path)
+    void model_generator::set_namespace(const std::vector<std::string> &namespaces)
     {
-        return false;
+        namespaces_ = namespaces;
     }
-    void model_generator::gen_model(const std::string &path)
+    bool model_generator::parse(const std::string &path)
     {
+        std::vector<std::string> files = list_dir(path, ".sql");
+
+        for (size_t i = 0; i < files.size(); i++)
+        {
+            if (file_.open_read(files[i].c_str()))
+            {
+                try
+                {
+                    parse();
+                }
+                catch (const std::exception& e)
+                {
+                    std::cout << "parse error:" << e.what() << std::endl;
+                    std::cout << "line:" << lines_ << std::endl;
+                    std::cout << current_line_ << "  >>" << line_buffer_ << std::endl;
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+    std::string model_generator::get_type(field &f)
+    {
+        std::string code;
+        if (f.unsigned_)
+            code += "unsigned ";
+
+        switch (f.type_)
+        {
+            case field::e_char:
+                code += "char";
+                break;
+            case field::e_short:
+                code += "short";
+                break;
+            case field::e_int:
+                code += "int";
+                break;
+            case field::e_long_long_int:
+                code += "long long int";
+                break;
+            case field::e_float:
+                code += "float";
+                break;
+            case field::e_double:
+                code += "double";
+                break;
+            case field::e_std_string:
+                code = "std::string";
+                break;
+            default:
+                throw syntax_error("unknown type " + f.type_str_);
+        }
+        return code;
+    }
+    std::string model_generator::gen_field(field &f)
+    {
+        std::string code;
+
+        code += tab + "//@Column{" + f.name_ + "}" + br;
+        code += tab + get_type(f) + " " + f.name_ + ";";
+
+        return code;
+    }
+    std::string model_generator::gen_construct(table &t)
+    {
+        std::string code;
+
+        code += tab + t.name_ + "()";
+        bool first = false;
+
+        for (size_t i = 0; i < t.fields_.size(); i++)
+        {
+            field &f = t.fields_[i];
+            if (f.type_ != field::e_std_string)
+            {
+                if (!first)
+                {
+                    code += br + tab + " :" + f.name_ + "(0),";
+                    first = true;
+                }
+                else
+                {
+                    code += br + tab + " " + f.name_ + "(0),";
+                }
+            }
+        }
+        if (code.back() == ',')
+            code.pop_back();
+
+        code += br + tab + "{" + br;
+
+        code += tab + "}" + br;
+
+        return code;
+    }
+    std::string model_generator::gen_model(table &t)
+    {
+        std::string code;
+
+        code += "//@Model" + br;
+        code += "//@Table{" + t.name_ + "}" + br;
+        code += "struct " + t.name_ + br;
+        code += "{" + br;
+
+        code += gen_construct(t);
+        code += br;
+
+        for (size_t i = 0; i < t.fields_.size(); i++)
+        {
+            code += gen_field(t.fields_[i]);
+            if (i < t.fields_.size())
+                code += br2;
+        }
+        code += "};";
+        return code;
+    }
+
+    model_generator::field
+        model_generator::get_primary_key(const table &t)
+    {
+        for (size_t i = 0; i < t.fields_.size(); i++)
+        {
+            if (t.primary_key_ == t.fields_[i].name_)
+                return t.fields_[i];
+        }
+        return model_generator::field();
+    }
+    std::string model_generator::gen_mapper(const table &t)
+    {
+        std::string code;
+        std::string pkey = t.primary_key_;
+        std::string name = t.name_;
+        std::string pkey_type;
+
+        field primary_key = get_primary_key(t);
+        pkey_type = get_type(primary_key);
+        if (pkey_type == "std::string")
+            pkey_type = "const std::string &";
+        else
+        {
+            pkey_type += " ";
+        }
+
+        code += "//@Mapper" + br;
+        code += "struct " + name +"_mapper"+ br;
+        code += "{" + br;
+
+        std::string update;
+        std::string insert;
+        std::string insert_value;
+        std::string $delete;
+        std::string select;
+        std::string select_all;
+
+        update += tab + "//@Update{update " + name + " set ";
+        insert += tab + "//@Insert{insert into " + name + "(";
+        insert_value += "value(";
+        $delete += tab + "//@Delete{delete from " + name + " where " + pkey + "=:" + pkey + ")}" + br;
+        select += tab + "//@Select{select * from " + name + " where " + pkey + "=:" + pkey + ")}" + br;
+        select_all += tab + "//@Select{select * from " + name + ")}" + br;
+        for (size_t i = 0; i < t.fields_.size(); i++)
+        {
+            const field &f = t.fields_[i];
+
+            update += f.name_ + "=:" + f.name_ + ",";
+            insert += f.name_ + ",";
+            insert_value += ":" + f.name_ + ",";
+        }
+        insert_value.pop_back();
+        insert_value += ")}";
+
+        insert.pop_back();
+        insert += ")";
+        insert += insert_value + br;
+        insert += tab + "virtual bool insert(const " + name + " &obj)=0;" + br;
+        select += tab + "virtual bool select(" + t.name_ + " &obj, " + pkey_type + primary_key.name_ + ")=0;" + br;
+        select_all += tab + "virtual bool select_all(std::list<" + name + "> &objs)=0;" + br;
+        $delete += tab + "virtual bool del(" + pkey_type + primary_key.name_ + ")=0;" + br;
+
+        update.pop_back();
+        update += " where " + pkey + " = :" + pkey + " }" + br;
+        update += tab + "virtual bool update(const " + name + " &obj)=0;" + br;
+
+        code += insert + br;
+        code += update + br;
+        code += $delete + br;
+        code += select + br;
+        code += select_all + br;
+        code += "};" + br;
+        return code;
+    }
+    static inline std::string namespace_begin(const std::vector<std::string> &namespaces)
+    {
+        std::string code;
+
+        for (size_t i = 0; i < namespaces.size(); i++)
+        {
+            std::string ns = namespaces[i];
+            code += "namespace " + ns + br;
+            code += "{" + br;
+        }
+        return code;
+    }
+
+    static inline std::string namespace_end(const std::vector<std::string> &namespaces)
+    {
+        std::string code;
+        for (int i = (int)namespaces.size() - 1; i >= 0; i--)
+        {
+            code += "}//end of " + namespaces[i] + br;
+        }
+        return code;
+    }
+
+    void model_generator::gen_model(const std::string &file_path)
+    {
+        std::string code;
+
+        code += "//@Models" + br;
+        code += "#pragma once" + br;
+
+        code += namespace_begin(namespaces_);
+
+        for (size_t i = 0; i < tables_.size(); i++)
+        {
+            code += gen_model(tables_[i]);
+            code += br2;
+        }
+
+        code += namespace_end(namespaces_);
+
+        acl::ofstream file;
+        if (!file.open_trunc(file_path.c_str()))
+            printf("open file(%s) error,%s",
+                   file_path.c_str(),
+                   acl::last_serror());
+
+        if (file.write(code.c_str(), code.size()) == -1)
+            printf("write file(%s) error,%s",
+                   file_path.c_str(),
+                   acl::last_serror());
+    }
+    void model_generator::gen_models(const std::string &path)
+    {
+        std::string base_path(path);
+
+        if (base_path[base_path.size() - 1] != '/' &&
+            base_path[base_path.size() - 1] != '\\')
+            base_path.push_back('/');
+
+        for (size_t i = 0; i < tables_.size(); i++)
+        {
+            std::string file_path;
+            std::string code;
+            code += "//@Models" + br;
+            code += "#pragma once" + br;
+
+            file_path = base_path + tables_[i].name_ + ".h";
+
+            code += namespace_begin(namespaces_);
+            code += gen_model(tables_[i]);
+            code += br;
+            code += namespace_end(namespaces_);
+            acl::ofstream file;
+            if (!file.open_trunc(file_path.c_str()))
+                printf("open file(%s) error,%s",
+                       file_path.c_str(),
+                       acl::last_serror());
+
+            if (file.write(code.c_str(), code.size()) == -1)
+                printf("write file(%s) error,%s",
+                       file_path.c_str(),
+                       acl::last_serror());
+        }
+    }
+    void model_generator::gen_create_tables(const std::string &path)
+    {
+        std::string base_path(path);
+
+        if (base_path[base_path.size() - 1] != '/' &&
+            base_path[base_path.size() - 1] != '\\')
+            base_path.push_back('/');
+
+        std::string file_path;
+        std::string code;
+        code += "#pragma once" + br;
+
+        file_path = base_path + "create_tables.h";
+
+        code += namespace_begin(namespaces_);
+
+        for (size_t i = 0; i < tables_.size(); i++)
+        {
+            table &t = tables_[i];
+
+            code += "inline bool create_table(acl::handle_db &handle, const " + t.name_ + "&)" + br;
+            code += "{" + br;
+            code += tab + "const char *sql = " + to_cstring(t.sql_, std::string(5, '\t')) + br;
+            code += tab + "if (handle.tbl_exists(\"" + t.name_ + "\"))" + br;
+            code += tab + "{" + br;
+            code += tab2 + "logger(\"table " + t.name_ + " exist\");" + br;
+            code += tab2 + "return true;" + br;
+            code += tab + "}" + br;
+            code += tab + "else if(handle.sql_update(sql) == false)" + br;
+            code += tab + "{" + br;
+            code += tab2 + "logger_error(\"create table " + t.name_ + " error. sql:%s\",sql);" + br;
+            code += tab2 + "return false;" + br;
+            code += tab + "}" + br;
+            code += tab + "logger(\"create table " + t.name_ + " ok\");" + br;
+            code += tab + "return true" + br;
+            code += "}" + br;
+
+        }
+
+        code += namespace_end(namespaces_);
+
+        acl::ofstream file;
+        if (!file.open_trunc(file_path.c_str()))
+            printf("open file(%s) error,%s",
+                   file_path.c_str(),
+                   acl::last_serror());
+
+        if (file.write(code.c_str(), code.size()) == -1)
+            printf("write file(%s) error,%s",
+                   file_path.c_str(),
+                   acl::last_serror());
+    }
+    void model_generator::gen_mapper(const std::string &path)
+    {
+        std::string base_path(path);
+
+        if (base_path[base_path.size() - 1] != '/' &&
+            base_path[base_path.size() - 1] != '\\')
+            base_path.push_back('/');
+
+
+        std::string file_path;
+        std::string code;
+        code += "//@Mappers" + br;
+        code += "#pragma once" + br2;
+
+        file_path = base_path + "mappers.h";
+
+        code += namespace_begin(namespaces_);
+
+        for (size_t i = 0; i < tables_.size(); i++)
+        {
+            table &t = tables_[i];
+            code += gen_mapper(t) + br;
+        }
+        code += namespace_end(namespaces_);
+
+        acl::ofstream file;
+        if (!file.open_trunc(file_path.c_str()))
+            printf("open file(%s) error,%s",
+                   file_path.c_str(),
+                   acl::last_serror());
+
+        if (file.write(code.c_str(), code.size()) == -1)
+            printf("write file(%s) error,%s",
+                   file_path.c_str(),
+                   acl::last_serror());
+    }
+    void model_generator::gen_mappers(const std::string &path)
+    {
+        std::string base_path(path);
+
+        if (base_path[base_path.size() - 1] != '/' &&
+            base_path[base_path.size() - 1] != '\\')
+            base_path.push_back('/');
+
+        for (size_t i = 0; i < tables_.size(); i++)
+        {
+            table &t = tables_[i];
+            std::string file_path;
+            std::string code;
+            code += "//@Mappers" + br;
+            code += "#pragma once" + br2;
+
+            file_path = base_path + t.name_ + "_mapper.h";
+
+            code += namespace_begin(namespaces_);
+            code += gen_mapper(t) + br;
+            code += namespace_end(namespaces_);
+
+            acl::ofstream file;
+            if (!file.open_trunc(file_path.c_str()))
+                printf("open file(%s) error,%s",
+                       file_path.c_str(),
+                       acl::last_serror());
+
+            if (file.write(code.c_str(), code.size()) == -1)
+                printf("write file(%s) error,%s",
+                       file_path.c_str(),
+                       acl::last_serror());
+        }
 
     }
 }

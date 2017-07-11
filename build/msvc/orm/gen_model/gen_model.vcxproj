@@ -19,8 +19,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{14398CF8-B748-42FB-BB3E-B126D482CB55}</ProjectGuid>
-    <RootNamespace>gen_dao</RootNamespace>
+    <ProjectGuid>{CE0A0DEE-F7FE-4531-9AF3-FA492568DEBB}</ProjectGuid>
+    <RootNamespace>gen_model</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -114,13 +114,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\..\src\dao_generator.cpp" />
-    <ClCompile Include="..\..\..\..\src\gen_dao.cpp" />
+    <ClCompile Include="..\..\..\..\src\gen_model.cpp" />
+    <ClCompile Include="..\..\..\..\src\model_generator.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\..\include\common.hpp" />
-    <ClInclude Include="..\..\..\..\include\dao_generator.h" />
-    <ClInclude Include="..\..\..\..\include\syntax_error.hpp" />
+    <ClInclude Include="..\..\..\..\include\model_generator.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -80,6 +80,7 @@ namespace acl
                 e_$mapper,          // @mapper 
                 e_$mappers,         // @mappers
                 e_$result,          // @Result
+                e_$include,         // @Include
             }type_;
         };
         struct entry;
@@ -190,16 +191,14 @@ namespace acl
         token current_token();
         void push_back_token(token t);
 
-        std::string next_token(const std::string &delims =
-                                    " /\r\t\n<>(){};,:=-+.@?&*%");
-        std::string look_ahead(const std::string &delims =
-                                    " /\r\t\n<>(){};,:=-+.@?&*%");
+        std::string next_token(const std::string &delimiters);
+        std::string look_ahead(const std::string &delimiters);
         void skip_space();
         void skip_space(std::string &line);
-        void skip(std::string &line, const std::string &delims);
+        
         int line_num();
         std::string next_line();
-
+        std::string get_line();
     private:
 
         void reset_status();
@@ -241,9 +240,7 @@ namespace acl
         std::string gen_func_impl_name(const std::string &class_name,
                                        const std::string &declare_);
         std::string gen_streq_code()const;
-
-
-    private:
+private:
         int to_field_type(int type);
         void print_entry(const entry &entry);
         void print_mapper(const mapper &mapper);
@@ -253,12 +250,16 @@ namespace acl
         void entry_reset();
         bool check_entry(std::string &name,
                          const std::vector<std::string> &namespaces);
+
         std::vector<field> get_fields(const std::string &name,
                                       const std::vector<std::string> &nss);
 
-        std::string namespace_to_string(const std::vector<std::string> &nsp);
         entry get_entry(const std::string &name,
                         const std::vector<std::string> &nps);
+
+        std::set<std::string> get_include_files(const std::string &file);
+        std::vector<std::string> 
+            parse_include(const std::vector<std::string> &files);
     private:
         long long int file_offset_;
         int line_num_;

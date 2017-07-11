@@ -23,7 +23,7 @@ include_directories(include
 
 set(SOURCE_FILES
         src/main.cpp
-        src/dao_generator.cpp)
+        src/gen_dao.cpp)
 
 add_executable(gen_dao ${SOURCE_FILES})
 target_link_libraries(gen_dao ${depend_libs})

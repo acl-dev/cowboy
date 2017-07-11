@@ -10,11 +10,12 @@ namespace acl
         {
             typedef enum type
             {
+                e_eof,
                 e_create,           // CREATE
                 e_table,            // TABLE
                 e_unique,           // UNIQUE
                 e_primary,          // PRIMARY
-                e_auto_increase,    // AUTO_INCREASE
+                e_auto_increment,   // AUTO_INCREASE
                 e_if,               // IF
                 e_not,              // NOT
                 e_exist,            // EXIST
@@ -23,7 +24,6 @@ namespace acl
                 e_charset,          // charset
                 e_temporary,        // temporary
                 e_as,               // AS
-                e_not,              // not
                 e_null,             // null
                 e_constraint,       // CONSTRAINT
                 e_foreign,          // FOREIGN KEY
@@ -35,6 +35,7 @@ namespace acl
                 e_key,              // key
                 e_pack_keys,        // PACK_KEYS
                 e_drop,
+                e_now,              // NOW()
 
                 e_unsigned,         // UNSIGNED
                 e_tinyint,          // TINYINT
@@ -56,6 +57,7 @@ namespace acl
                 e_mediumblob,
                 e_longtext,
                 e_longblob,
+
                 e_enum,
                 e_set,
 
@@ -92,6 +94,7 @@ namespace acl
                 unsigned_ = false;
                 not_null_ = false;
                 unique_ = false;
+                primary_key_ = false;
             }
             typedef enum type
             {
@@ -124,39 +127,56 @@ namespace acl
             std::string primary_key_;
             std::string engine_;
             std::string charset_;
+            std::string auto_increment_;
             std::vector<field> fields_;
             std::string sql_;
         };
     public:
         model_generator();
-        bool parse_sql(const std::string &file_path);
-        void gen_model(const std::string &path);
+        void set_namespace(const std::vector<std::string> &namespaces);
+        bool parse(const std::string &path);
+        void gen_model(const std::string &file_path);
+        void gen_models(const std::string &path);
+        void gen_create_tables(const std::string &path);
+        void gen_mapper(const std::string &path);
+        void gen_mappers(const std::string &path);
     private:
         std::string next_token(const std::string &delimiters);
         std::string get_string(char end);
         std::string next_line();
+        void push_back_token(const token&t);
         token get_next_token();
         token current_token();
 
         char look_ahead();
-        void skip(std::string &str, const std::string &chars, bool skip_all);
     private:
         field::type to_field_type(const token &t);
+        std::string get_name();
         std::string get_string();
-        std::string get_default();
         field parse_field();
         void parse_table();
         void parse();
     private:
+        std::string get_type(field &f);
+        std::string gen_field(field &f);
+        std::string gen_construct(table &t);
+        std::string gen_model(table &t);
+        
+        field get_primary_key(const table &t);
+        std::string gen_mapper(const table &t);
+    private:
         int lines_;
+        std::vector<std::string> namespaces_;
         std::string line_buffer_;
+        std::string field_suffix_;
+        std::string table_suffix_;
         std::string current_line_;
         token current_token_;
         std::vector <token> tokens_;
         std::string namespace_;
         acl::ifstream file_;
         std::string file_path_;
-        table table1_;
+        table table_;
         std::vector<table> tables_;
     };
 }

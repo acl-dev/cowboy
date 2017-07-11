@@ -1,33 +1,18 @@
 #include <iostream>
-#include <stdexcept>
-#include "acl_cpp/lib_acl.hpp"
-#include "lib_acl.h"
+#include "syntax_error.hpp"
+#include "common.hpp"
 #include "dao_generator.h"
+
+#define br  std::string("\r\n")
+#define br2  std::string("\r\n\r\n")
+#define tab std::string("\t")
+#define tab2 std::string("\t\t")
+#define tab3  std::string("\t\t\t")
+#define tab4  std::string("\t\t\t\t")
 
 namespace acl
 {
-    static inline std::string get_filename(const std::string &file_path)
-    {
-        size_t nps = file_path.find_last_of('/');
-        if (nps == file_path.npos)
-        {
-            nps = file_path.find_last_of('\\');
-        }
-        if (nps != file_path.npos)
-            return file_path.substr(nps + 1);
-        return file_path;
-    }
-
-    struct syntax_error : public std::logic_error
-    {
-    public:
-        syntax_error(const std::string &error = "syntax_error")
-            :std::logic_error(error)
-        {
-
-        }
-    };
-
+    
     dao_generator::dao_generator()
     {
         line_num_ = 0;
@@ -44,7 +29,7 @@ namespace acl
 
         store_file_point();
         if(line_buffer.empty())
-            line_buffer = next_line();
+            line_buffer = get_line();
         do
         {
             for (int i = 0; i < line_buffer.size(); ++i)
@@ -60,7 +45,7 @@ namespace acl
             }
             if(end)
                 break;
-            line_buffer = next_line();
+            line_buffer = get_line();
         }while(true);
         reload_file_point();
         return buffer;
@@ -75,6 +60,7 @@ namespace acl
     }
     void dao_generator::reset_lexer()
     {
+        file_.close();
         tokens_.clear();
         line_num_ = 0;
         line_buffer_.clear();
@@ -96,8 +82,9 @@ namespace acl
             current_token_ = t;
             return t;
         }
+        const std::string delimiters = " /\r\t\n<>(){};,:=-+.@?&*%";
 
-        std::string str = next_token();
+        std::string str = next_token(delimiters);
 
         t.str_ = str;
         t.line_ = line_num();
@@ -118,9 +105,9 @@ namespace acl
         else if (str == ":")
         {
             t.type_ = token::e_colon;
-            if(look_ahead() == ":")
+            if(look_ahead(delimiters) == ":")
             {
-                next_token();
+                next_token(delimiters);
                 t.type_ = token::e_double_colon;
                 t.str_ = "::";
             }
@@ -159,16 +146,16 @@ namespace acl
         }
         else if (str == "/")
         {
-            if (look_ahead() == "/")
+            if (look_ahead(delimiters) == "/")
             {
-                str = next_token();
+                str = next_token(delimiters);
                 t.type_ = token::e_comment;
                 t.str_ = "//";
                 t.line_ = line_num();
             }
-            else if (look_ahead() == "*")
+            else if (look_ahead(delimiters) == "*")
             {
-                str = next_token();
+                str = next_token(delimiters);
                 t.type_ = token::e_comment_begin;
                 t.str_ = "/*";
                 t.line_ = line_num();
@@ -178,9 +165,9 @@ namespace acl
         }
         else if (str == "*")
         {
-            if (look_ahead() == "/")
+            if (look_ahead(delimiters) == "/")
             {
-                str = next_token();
+                str = next_token(delimiters);
                 t.type_ = token::e_comment_end;
                 t.str_ = "*/";
                 t.line_ = line_num();
@@ -194,7 +181,7 @@ namespace acl
         }
         else if (str == "#pragma")
         {
-            str = next_token();
+            str = next_token(delimiters);
             if (str == "once")
             {
                 t.type_ = token::e_pragma_once;
@@ -204,8 +191,8 @@ namespace acl
         }
         else if (str == "long")
         {
-            if(next_token() == "long" &&
-               next_token() == "int")
+            if(next_token(delimiters) == "long" &&
+               next_token(delimiters) == "int")
             {
                 t.type_ = token::e_long_long_int;
             }
@@ -253,73 +240,79 @@ namespace acl
         }
         else if (str == "@")
         {
-            str = look_ahead();
+            str = look_ahead(delimiters);
 
             if (str == "Table")
             {
                 t.type_ = token::e_$table;
                 t.str_ = "@Table";
-                next_token();
+                next_token(delimiters);
             }
             else if (str == "Model")
             {
                 t.type_ = token::e_$model;
                 t.str_ = "@Model";
-                next_token();
+                next_token(delimiters);
             }
             else if (str == "Models")
             {
                 t.type_ = token::e_$models;
                 t.str_ = "@Models";
-                next_token();
+                next_token(delimiters);
             }
             else if (str == "Column")
             {
                 t.type_ = token::e_$column;
                 t.str_ = "@Column";
-                next_token();
+                next_token(delimiters);
             }
             else if (str == "Delete")
             {
                 t.type_ = token::e_$delete;
                 t.str_ = "@Delete";
-                next_token();
+                next_token(delimiters);
             }
             else if (str == "Update")
             {
                 t.type_ = token::e_$update;
                 t.str_ = "@Update";
-                next_token();
+                next_token(delimiters);
             }
             else if (str == "Insert")
             {
                 t.type_ = token::e_$insert;
                 t.str_ = "@Insert";
-                next_token();
+                next_token(delimiters);
             }
             else if (str == "Select")
             {
                 t.type_ = token::e_$select;
                 t.str_ = "@Select";
-                next_token();
+                next_token(delimiters);
             }
             else if (str == "Mappers")
             {
                 t.type_ = token::e_$mappers;
                 t.str_ = "@Mappers";
-                next_token();
+                next_token(delimiters);
             }
             else if (str == "Mapper")
             {
                 t.type_ = token::e_$mapper;
                 t.str_ = "@Mapper";
-                next_token();
+                next_token(delimiters);
             }
             else if (str == "Result")
             {
                 t.type_ = token::e_$result;
                 t.str_ = "@Result";
-                next_token();
+                next_token(delimiters);
+            }
+            else if (str == "Include")
+            {
+                t.type_ = token::e_$include;
+                t.str_ = "@Include";
+                next_token(delimiters);
             }
             else
                 t.type_ = token::e_$;
@@ -331,9 +324,9 @@ namespace acl
         }
         else if (str == "std")
         {
-            if (next_token() == ":" && next_token() == ":")
+            if (next_token(delimiters) == ":" && next_token(delimiters) == ":")
             {
-                str = next_token();
+                str = next_token(delimiters);
                 if (str == "list")
                 {
                     t.type_ = token::e_std_list;
@@ -401,6 +394,12 @@ namespace acl
         }
         return token_buf_;
     }
+    std::string dao_generator::get_line()
+    {
+        acl::string buffer;
+        file_.gets(buffer, false);
+        return buffer.c_str();
+    }
     std::string dao_generator::next_line()
     {
         acl::string buffer;
@@ -452,35 +451,6 @@ namespace acl
         }
 
         return buf;
-    }
-
-    void dao_generator::skip(std::string &line,
-                             const std::string &delims)
-    {
-        size_t offset = 0;
-
-        if (line.empty())
-            return;
-
-        for (size_t i = 0; i < line.size(); i++)
-        {
-            char ch = line[i];
-            if (delims.find(ch) != delims.npos)
-            {
-                offset++;
-                continue;
-            }
-            break;
-        }
-
-        if (offset == line.size())
-        {
-            line.clear();
-        }
-        else if (offset)
-        {
-            line = line.substr(offset);
-        }
     }
     void dao_generator::skip_space(std::string &line)
     {
@@ -535,17 +505,7 @@ namespace acl
         entry_.table_name_.clear();
         entry_.fields_.clear();
     }
-    std::string dao_generator::namespace_to_string(
-            const std::vector<std::string> &nss)
-    {
-        std::string buffer;
-        for (size_t i = 0; i < nss.size(); ++i)
-        {
-            buffer.append(nss[i]);
-            buffer.append("::");
-        }
-        return buffer;
-    }
+    
 
     dao_generator::entry
         dao_generator::get_entry(const std::string &name,
@@ -1471,6 +1431,10 @@ namespace acl
                     if (t.type_ != token::e_close_curly_brace)
                         throw syntax_error();
                 }
+                else if (t.type_ == token::e_$include)
+                {
+                    while (get_next_token().type_ != token::e_close_curly_brace);
+                }
             }
             else if (t.type_ == token::e_struct)
             {
@@ -1485,13 +1449,7 @@ namespace acl
 
         return false;
     }
-    #define br  std::string("\r\n")
-    #define br2  std::string("\r\n\r\n")
-    #define tab std::string("\t")
-    #define tab2 std::string("\t\t")
-    #define tab3  std::string("\t\t\t")
-    #define tab4  std::string("\t\t\t\t")
-
+    
     std::string dao_generator::get_class_name(const std::string &parent_name)
     {
         acl::string class_name = parent_name.c_str();
@@ -1522,7 +1480,9 @@ namespace acl
             {
                 if (token == "bool")
                 {
-                    return "bool " + class_name + "::" + code.substr(i + 1);
+                    std::string str = code.substr(i + 1);
+                    skip_space(str);
+                    return "bool " + class_name + "::" + str;
                 }
                 else if (token == "virtual")
                 {
@@ -1689,60 +1649,7 @@ namespace acl
         }
         return str + ";";
     }
-    static inline std::string skip_all(const std::string &str,
-                                       const std::string &skip_str)
-    {
-        std::string buffer;
-        for (size_t i = 0; i < str.size(); ++i)
-        {
-            char ch = str[i];
-            if(skip_str.find(ch) == std::string::npos)
-            {
-                buffer.push_back(ch);
-            }
-        }
-        return buffer;
-    }
-
-    static inline std::string replace(const std::string &str,
-                                      char from,
-                                      char to)
-    {
-        std::string buffer;
-        for (size_t i = 0; i < str.size(); ++i)
-        {
-            char ch = str[i];
-            if(ch == from)
-            {
-                buffer.push_back(to);
-            }else
-            {
-                buffer.push_back(ch);
-            }
-        }
-        return buffer;
-    }
-    static inline std::string skip_multi_space(const std::string &str)
-    {
-        std::string buffer;
-        for (size_t i = 0; i < str.size(); ++i)
-        {
-            char ch = str[i];
-            if(ch == ' ')
-            {
-                buffer.push_back(' ');
-                for ( ; i < str.size(); ++i)
-                {
-                    ch = str[i];
-                    if(ch != ' ')
-                        break;
-                }
-            }
-
-            buffer.push_back(ch);
-        }
-        return buffer;
-    }
+    
 
     std::string dao_generator::get_define_columns(
             const std::vector<field> &fields,
@@ -2447,37 +2354,123 @@ namespace acl
             print_entry(*it);
         }
     }
-    static inline std::vector<std::string>
-    list_dir(const std::string &path, const std::string &ext_)
+    void merge(std::set<std::string> &left,const std::set<std::string> &right)
     {
-        std::vector<std::string> files;
-        const char* file_path = NULL;
-
-        acl::scan_dir scan;
-        if (!scan.open(path.c_str(), false))
+        for (std::set<std::string>::const_iterator it = right.begin();
+             it != right.end();
+             ++it)
         {
-            printf("scan open error %s\n",
-                         acl::last_serror());
-            return files;
+            left.insert(*it);
         }
-        while ((file_path = scan.next_file(true)))
-        {
-            if (ext_.size())
-            {
-                if (acl_strrncasecmp(file_path,
-                                     ext_.c_str(),
-                                     ext_.size()) == 0)
-                {
-                    files.push_back(file_path);
-                }
-            }
-            else
-            {
-                files.push_back(file_path);
-            }
+    }
+    int g_model_files = 0;
+    bool dead_loop()
+    {
+        static int i = 0;
+        i++;
+        if (i > g_model_files * 2)
+            return true;
+        //std::cout << "i:" << i << std::endl;
+        return false;
+    }
+    std::map<std::string, std::set<std::string>> g_includes;
 
+    std::set<std::string> dao_generator::get_include_files(const std::string &file_path)
+    {
+        if (g_includes.find(file_path) != g_includes.end())
+            return g_includes[file_path];
+
+        if (dead_loop())
+            throw syntax_error("parse //@include{} detect dead_loop");
+
+        reset_lexer();
+        std::set<std::string> includes;
+        if (!file_.open_read(file_path.c_str()))
+        {
+            printf("open file(%s) error %s\n",
+                   file_path.c_str(), 
+                   acl::last_serror());
+            return includes;
         }
-        return files;
+        token t;
+        t.type_ = token::e_$;
+        while (t.type_ != token::e_eof)
+        {
+            t = get_next_token();
+            if (t.type_ == token::e_comment)
+            {
+                t = get_next_token();
+                if (t.type_ != token::e_$include)
+                    continue;
+                if (get_next_token().type_ != token::e_open_curly_brace)
+                    throw syntax_error("not found { >>" + t.str_);
+                std::string str = get_string('}');
+                includes.insert(str);
+                dao_generator *gen = new dao_generator;
+                merge(includes, gen->get_include_files(str));
+                delete gen;
+
+                while (get_next_token().type_ != token::e_close_curly_brace);
+            }
+            
+        }
+        g_includes[file_path] = includes;
+
+        return includes;
+    }
+    void insert(std::list<std::pair<int, std::string>> &result, 
+                     const std::string &file, 
+                     int size)
+    {
+        std::pair<int, std::string> item = std::make_pair(size, file);
+
+        std::list<std::pair<int, std::string>>::iterator it = result.begin();
+        if (size == 0 || result.empty())
+        {
+            result.push_front(item);
+            return;
+        }
+        for (; it != result.end(); ++it)
+        {
+            if (it->first >= size)
+            {
+                result.insert(it,item);
+                return;
+            }
+        }
+        result.push_back(item);
+    }
+    void print_include(const std::string &file, const std::set<std::string> &includes)
+    {
+        std::cout << file << " include:" << std::endl;
+
+        for (std::set<std::string>::const_iterator it = includes.begin(); 
+             it != includes.end(); ++it)
+        {
+            std::cout <<" >> "<<it->c_str() << std::endl;
+        }
+    }
+    std::vector<std::string>
+        dao_generator::parse_include(const std::vector<std::string> &files)
+    {
+        std::list<std::pair<int, std::string>> sort_list;
+        std::vector<std::string> result;
+
+        g_model_files = (int)files.size();
+
+        for (size_t i = 0; i < files.size(); i++)
+        {
+            std::set<std::string> includes = get_include_files(get_filename(files[i]));
+            insert(sort_list, files[i], (int)includes.size());
+            //print_include(files[i], includes);
+        }
+
+        std::list<std::pair<int, std::string>>::iterator it = sort_list.begin();
+        for (; it != sort_list.end(); ++it)
+        {
+            result.push_back(it->second);
+        }
+        return result;
     }
     bool dao_generator::parse_path(const std::string &path)
     {
@@ -2519,6 +2512,7 @@ namespace acl
             }
             file.close();
         }
+        model_files = parse_include(model_files);
 
         for (size_t j = 0; j < model_files.size(); ++j)
         {

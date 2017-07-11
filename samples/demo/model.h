@@ -9,7 +9,7 @@ struct customer_t
 {
     customer_t()
     {
-	id = 0;
+	    id = 0;
     }
     int id;
     std::string address;
@@ -39,16 +39,15 @@ struct orders_t
     int customer_id;
 };
 
+
 //@Model
 struct customer_order_t :customer_t
 {
-    //一对多
     std::list<orders_t> orders;
 };
 
 //@Model
 struct order_customer_t :orders_t
 {
-    //多对一
     customer_t customer;
 };
