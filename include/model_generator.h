@@ -25,6 +25,7 @@ namespace acl
                 e_as,               // AS
                 e_not,              // not
                 e_null,             // null
+                e_constraint,       // CONSTRAINT
                 e_foreign,          // FOREIGN KEY
                 e_reference,        // reference
                 e_sql_comment,      // comment ''
@@ -105,6 +106,8 @@ namespace acl
             }type;
 
             int max_len_;
+            std::string type_str_;
+            std::string type_len_;
             type type_;
             std::string name_;
             std::string comment_;
@@ -122,6 +125,7 @@ namespace acl
             std::string engine_;
             std::string charset_;
             std::vector<field> fields_;
+            std::string sql_;
         };
     public:
         model_generator();
@@ -129,7 +133,7 @@ namespace acl
         void gen_model(const std::string &path);
     private:
         std::string next_token(const std::string &delimiters);
-
+        std::string get_string(char end);
         std::string next_line();
         token get_next_token();
         token current_token();

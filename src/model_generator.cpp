@@ -28,6 +28,32 @@ namespace acl
         current_line_ = buffer.c_str();
         return current_line_;
     }
+    std::string model_generator::get_string(char end)
+    {
+        std::string buffer;
+        std::string data = current_line_;
+        std::string current_lien = current_line_;
+        long long offset = file_.ftell();
+
+        do
+        {
+            for (size_t i = 0; i < data; ++i)
+            {
+                char ch = data[i];
+                if(ch != end)
+                {
+                    buffer.push_back(ch);
+                }
+                else
+                {
+                    current_line_ = current_lien;
+                    file_.fseek(offset, SEEK_SET);
+                    return buffer;
+                }
+            }
+            buffer = next_line();
+        }while(true);
+    }
     void skip(std::string &str, 
               const std::string &skip_chars, 
               bool skip_all)
@@ -40,7 +66,7 @@ namespace acl
             char ch = str[i];
             if (skip_chars.find(ch) == skip_chars.npos)
             {
-                if (!skip_all && !!i)
+                if (!skip_all && i > 0)
                 {
                     str = str.substr(i);
                     return;
@@ -482,13 +508,21 @@ namespace acl
             t = get_next_token();
         }
 
-        //eg: varchar(255)
+        //eg: varchar(255) or double(10,10)
         if(t.type_ == token::e_open_paren)
         {
             t = get_next_token();
-            while(t.type_ != token::e_close_paren)
+            f.type_len_.append(t.str_);
+            while(true)
             {
                 t = get_next_token();
+                if(t.type_ == token::e_close_paren)
+                {
+                    t = get_next_token();
+                    break;
+                }
+                else
+                    f.type_len_.append(t.str_);
             }
         }
 
@@ -538,16 +572,26 @@ namespace acl
     {
         table1_.name_ = get_string();
 
-        t = get_next_token();
+        token t = get_next_token();
         if(t.type_ != token::e_open_paren)
             throw syntax_error();
 
         t = get_next_token();
 
-        while(t.type_ != token::e_close_paren)
+        while(t.type_ != token::e_semicolon)
         {
-            field f = parse_field();
-            table1_.fields_.push_back(f);
+            if(t.type_ == token::e_backtick ||
+                    t.type_ == token::e_identifier)
+            {
+                field f = parse_field();
+                table1_.fields_.push_back(f);
+            }
+            else if(t.type_ == token::e_primary)
+            {
+                t = get_next_token();
+                if(t.type_ != token::e_key)
+                    throw syntax_error("unknown token "+ t.str_);
+            }
         }
 
     }
@@ -556,9 +600,14 @@ namespace acl
         do
         {
             token t = get_next_token();
-            if(t.e_double_sub)
+            if(t.type_ == token::e_double_sub)
             {
-
+                line_buffer_.clear();
+            }
+            else if(t.type_ == token::e_comment_begin)
+            {
+                while(t.type_ != token::e_comment_end)
+                    t = get_next_token();
             }
             else if(t.type_ == token::e_create)
             {
@@ -566,6 +615,9 @@ namespace acl
                 if(t.type_ == token::e_table)
                 {
                     table1_ = table();
+                    table1_.sql_  = get_string(';');
+                    table1_.sql_.push_back(';');
+
                     parse_table();
                 }
             }

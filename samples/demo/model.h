@@ -2,6 +2,7 @@
 #pragma once
 #include <string>
 #include <list>
+
 //@Model
 //@Table{customer}
 struct customer_t
@@ -14,7 +15,7 @@ struct customer_t
     std::string address;
 
     //@Column{postcode}
-    std::string postcode;
+    std::string postcode ;
 
     //@Column{sex}
     std::string sex;
