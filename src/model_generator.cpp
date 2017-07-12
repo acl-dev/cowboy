@@ -813,16 +813,22 @@ namespace acl
         update += tab + "//@Update{update " + name + " set ";
         insert += tab + "//@Insert{insert into " + name + "(";
         insert_value += "value(";
-        $delete += tab + "//@Delete{delete from " + name + " where " + pkey + "=:" + pkey + ")}" + br;
-        select += tab + "//@Select{select * from " + name + " where " + pkey + "=:" + pkey + ")}" + br;
+        $delete += tab + "//@Delete{delete from " + name 
+            + " where " + pkey + "=:" + pkey + ")}" + br;
+
+        select += tab + "//@Select{select * from " + 
+            name + " where " + pkey + "=:" + pkey + ")}" + br;
+
         select_all += tab + "//@Select{select * from " + name + ")}" + br;
         for (size_t i = 0; i < t.fields_.size(); i++)
         {
             const field &f = t.fields_[i];
-
-            update += f.name_ + "=:" + f.name_ + ",";
-            insert += f.name_ + ",";
-            insert_value += ":" + f.name_ + ",";
+            if (!f.auto_increase_)
+            {
+                update += f.name_ + "=:" + f.name_ + ",";
+                insert += f.name_ + ",";
+                insert_value += ":" + f.name_ + ",";
+            }
         }
         insert_value.pop_back();
         insert_value += ")}";
@@ -830,10 +836,17 @@ namespace acl
         insert.pop_back();
         insert += ")";
         insert += insert_value + br;
-        insert += tab + "virtual bool insert(const " + name + " &obj)=0;" + br;
-        select += tab + "virtual bool select(" + t.name_ + " &obj, " + pkey_type + primary_key.name_ + ")=0;" + br;
-        select_all += tab + "virtual bool select_all(std::list<" + name + "> &objs)=0;" + br;
-        $delete += tab + "virtual bool del(" + pkey_type + primary_key.name_ + ")=0;" + br;
+        insert += tab + "virtual bool insert(const " + 
+            name + " &obj)=0;" + br;
+
+        select += tab + "virtual bool select(" + name + 
+            " &obj, " + pkey_type + primary_key.name_ + ")=0;" + br;
+
+        select_all += tab + "virtual bool select_all(std::list<" + 
+            name + "> &objs)=0;" + br;
+
+        $delete += tab + "virtual bool del(" + pkey_type + 
+            primary_key.name_ + ")=0;" + br;
 
         update.pop_back();
         update += " where " + pkey + " = :" + pkey + " }" + br;
@@ -847,7 +860,8 @@ namespace acl
         code += "};" + br;
         return code;
     }
-    static inline std::string namespace_begin(const std::vector<std::string> &namespaces)
+    static inline std::string 
+        namespace_begin(const std::vector<std::string> &namespaces)
     {
         std::string code;
 
@@ -860,7 +874,8 @@ namespace acl
         return code;
     }
 
-    static inline std::string namespace_end(const std::vector<std::string> &namespaces)
+    static inline std::string 
+        namespace_end(const std::vector<std::string> &namespaces)
     {
         std::string code;
         for (int i = (int)namespaces.size() - 1; i >= 0; i--)

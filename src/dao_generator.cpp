@@ -12,7 +12,7 @@
 
 namespace acl
 {
-    
+
     dao_generator::dao_generator()
     {
         line_num_ = 0;
@@ -28,14 +28,14 @@ namespace acl
         bool end = false;
 
         store_file_point();
-        if(line_buffer.empty())
+        if (line_buffer.empty())
             line_buffer = get_line();
         do
         {
             for (int i = 0; i < line_buffer.size(); ++i)
             {
                 char ch = line_buffer[i];
-                if(ch != end_ch)
+                if (ch != end_ch)
                     buffer.push_back(ch);
                 else
                 {
@@ -43,10 +43,10 @@ namespace acl
                     break;
                 }
             }
-            if(end)
+            if (end)
                 break;
             line_buffer = get_line();
-        }while(true);
+        } while (true);
         reload_file_point();
         return buffer;
     }
@@ -105,7 +105,7 @@ namespace acl
         else if (str == ":")
         {
             t.type_ = token::e_colon;
-            if(look_ahead(delimiters) == ":")
+            if (look_ahead(delimiters) == ":")
             {
                 next_token(delimiters);
                 t.type_ = token::e_double_colon;
@@ -191,8 +191,8 @@ namespace acl
         }
         else if (str == "long")
         {
-            if(next_token(delimiters) == "long" &&
-               next_token(delimiters) == "int")
+            if (next_token(delimiters) == "long" &&
+                next_token(delimiters) == "int")
             {
                 t.type_ = token::e_long_long_int;
             }
@@ -230,11 +230,11 @@ namespace acl
         {
             t.type_ = token::e_virtual;
         }
-        else if(str == "using")
+        else if (str == "using")
         {
             t.type_ = token::e_using;
         }
-        else if(str == "namespace")
+        else if (str == "namespace")
         {
             t.type_ = token::e_namespace;
         }
@@ -505,23 +505,23 @@ namespace acl
         entry_.table_name_.clear();
         entry_.fields_.clear();
     }
-    
+
 
     dao_generator::entry
         dao_generator::get_entry(const std::string &name,
                                  const std::vector<std::string> &namespaces)
     {
         dao_generator::entry e;
-        std::string error = "not find "+namespace_to_string(namespaces)+name;
+        std::string error = "not find " + namespace_to_string(namespaces) + name;
 
         std::vector<entry>::iterator it = entries_.begin();
         for (; it != entries_.end(); ++it)
         {
             if (it->name_ == name)
             {
-                if(it->namespaces_.empty())
+                if (it->namespaces_.empty())
                     return *it;
-                else if(it->namespaces_ == namespaces)
+                else if (it->namespaces_ == namespaces)
                     return *it;
             }
         }
@@ -533,16 +533,16 @@ namespace acl
                                   const std::vector<std::string> &namespaces)
     {
         std::vector<dao_generator::field> fields;
-        std::string error = "not find "+namespace_to_string(namespaces)+name;
+        std::string error = "not find " + namespace_to_string(namespaces) + name;
 
         std::vector<entry>::iterator it = entries_.begin();
         for (; it != entries_.end(); ++it)
         {
             if (it->name_ == name)
             {
-                if(it->namespaces_.empty())
+                if (it->namespaces_.empty())
                     return it->fields_;
-                else if(it->namespaces_ == namespaces)
+                else if (it->namespaces_ == namespaces)
                     return it->fields_;
 
             }
@@ -558,9 +558,9 @@ namespace acl
         {
             if (it->name_ == name)
             {
-                if(it->namespaces_.empty())
+                if (it->namespaces_.empty())
                     return true;
-                else if(it->namespaces_ == namespaces)
+                else if (it->namespaces_ == namespaces)
                     return  true;
             }
         }
@@ -596,10 +596,11 @@ namespace acl
                 }
             }
             return false;
-        }catch (std::exception &e)
+        }
+        catch (std::exception &e)
         {
             printf("%s\n", e.what());
-            printf("file_path:%s\n",file_path_.c_str());
+            printf("file_path:%s\n", file_path_.c_str());
             printf("line:%d   %s   >>%s",
                    line_num_,
                    current_line_.c_str(),
@@ -617,7 +618,7 @@ namespace acl
 
             token current_token = current_token_;
             token next = get_next_token();
-            if(next.type_ == token::e_double_colon)
+            if (next.type_ == token::e_double_colon)
             {
                 //a::b::c o
                 namespaces.push_back(t1.str_);
@@ -625,12 +626,12 @@ namespace acl
             }
             else
             {
-                push_back_token(next );
+                push_back_token(next);
                 current_token_ = current_token;
                 break;
             }
-        }while(true);
-        if(namespaces.empty())
+        } while (true);
+        if (namespaces.empty())
             namespaces = namespaces_;
         return namespaces;
     }
@@ -642,31 +643,32 @@ namespace acl
         {
             token current_token = current_token_;
             t = get_next_token();
-            if(t.type_ == token::e_comment)
+            if (t.type_ == token::e_comment)
             {
                 line_buffer_.clear();
                 continue;
             }
-            else if(t.type_ == token::e_comment_begin)
+            else if (t.type_ == token::e_comment_begin)
             {
                 do
                 {
                     t = get_next_token();
-                    if(t.type_ == token::e_comment_end)
+                    if (t.type_ == token::e_comment_end)
                     {
                         //update current_token;
                         push_back_token(get_next_token());
                         break;
                     }
 
-                }while(true);
-            }else
+                } while (true);
+            }
+            else
             {
                 current_token_ = current_token;
                 push_back_token(t);
                 break;
             }
-        }while(true);
+        } while (true);
     }
     void dao_generator::parse_include()
     {
@@ -730,13 +732,13 @@ namespace acl
             if (t3.type_ != token::e_identifier)
                 throw syntax_error();
             ///to do
-            std::vector<std::string> namespaces= get_namespace();
+            std::vector<std::string> namespaces = get_namespace();
             t3 = current_token();
             if (!check_entry(t3.str_, namespaces))
             {
                 throw syntax_error(std::string("not found ") + t3.str_);
             }
-            entry_.fields_ = get_fields(t3.str_,namespaces);
+            entry_.fields_ = get_fields(t3.str_, namespaces);
             //get { token
             t1 = get_next_token();
         }
@@ -806,7 +808,7 @@ namespace acl
                 throw syntax_error();
             }
             else if (t1.type_ == token::e_std_list ||
-                    t1.type_ == token::e_std_vector)
+                     t1.type_ == token::e_std_vector)
             {
                 // <
                 t2 = get_next_token();
@@ -817,9 +819,9 @@ namespace acl
                 if (t3.type_ != token::e_identifier)
                     throw syntax_error();
 
-                std::vector<std::string> nps= get_namespace();
+                std::vector<std::string> nps = get_namespace();
                 t3 = current_token();
-                if (!check_entry(t3.str_,nps))
+                if (!check_entry(t3.str_, nps))
                     throw syntax_error(std::string("can't find ") + t3.str_);
 
                 // > 
@@ -865,14 +867,14 @@ namespace acl
                 std::vector<std::string> namespaces = get_namespace();
                 t1 = current_token();
 
-                if (!check_entry(t1.str_,namespaces))
+                if (!check_entry(t1.str_, namespaces))
                     throw syntax_error(std::string("can't find ") + t1.str_);
 
                 t2 = get_next_token();
                 if (t2.type_ != token::e_identifier)
                     throw syntax_error();
                 f.type_ = field::e_entry;
-                f.entry_ = new entry(get_entry(t1.str_,namespaces));
+                f.entry_ = new entry(get_entry(t1.str_, namespaces));
                 f.name_ = t2.str_;
                 f.type_str_ = t1.str_;
 
@@ -922,11 +924,11 @@ namespace acl
                 continue;
             }
             else if (t.type_ == token::e_acl_string ||
-                t.type_ == token::e_std_string ||
-                t.type_ == token::e_int ||
-                t.type_ == token::e_long_long_int ||
-                t.type_ == token::e_float ||
-                t.type_ == token::e_double)
+                     t.type_ == token::e_std_string ||
+                     t.type_ == token::e_int ||
+                     t.type_ == token::e_long_long_int ||
+                     t.type_ == token::e_float ||
+                     t.type_ == token::e_double)
             {
                 param.type_ = (field::type_t)to_field_type(t.type_);
                 param.type_str_ = t.str_;
@@ -941,12 +943,12 @@ namespace acl
 
             else if (t.type_ == token::e_identifier)
             {
-                std::vector<std::string> namespaces= get_namespace();
+                std::vector<std::string> namespaces = get_namespace();
                 t = current_token();
-                if (!check_entry(t.str_,namespaces))
+                if (!check_entry(t.str_, namespaces))
                     throw syntax_error(std::string("not found ") + t.str_);
                 param.type_ = field::e_entry;
-                param.entry_ = new entry(get_entry(t.str_,namespaces));
+                param.entry_ = new entry(get_entry(t.str_, namespaces));
                 param.type_str_ = t.str_;
 
                 token t2 = get_next_token();
@@ -968,7 +970,7 @@ namespace acl
                 token t2 = get_next_token();
                 if (t2.type_ != token::e_identifier)
                     throw syntax_error();
-                std::vector<std::string> namespaces= get_namespace();
+                std::vector<std::string> namespaces = get_namespace();
                 t2 = current_token();
                 if (get_next_token().type_ != token::e_greate)
                     throw syntax_error();
@@ -979,7 +981,7 @@ namespace acl
                     throw syntax_error();
 
                 param.type_ = field::e_vector;
-                param.entry_ = new entry(get_entry(t2.str_,namespaces));
+                param.entry_ = new entry(get_entry(t2.str_, namespaces));
                 param.type_str_ = t.str_;
                 param.name_ = t3.str_;
                 mapper_.model_files_.insert(param.entry_->filepath_);
@@ -1106,10 +1108,10 @@ namespace acl
             else
             {
                 std::string first = property
-                        .substr(0, property.find_first_of('.'));
+                    .substr(0, property.find_first_of('.'));
 
                 std::string second = property
-                        .substr(property.find_first_of('.') + 1);
+                    .substr(property.find_first_of('.') + 1);
                 bool found = false;
 
                 for (size_t j = 0; j < fields.size(); j++)
@@ -1118,7 +1120,7 @@ namespace acl
                     if (f.name_ == first)
                     {
                         if (f.type_ != field::e_vector &&
-                                f.type_ != field::e_entry)
+                            f.type_ != field::e_entry)
                             throw syntax_error();
 
                         for (size_t k = 0; k < f.entry_->fields_.size(); k++)
@@ -1213,7 +1215,7 @@ namespace acl
             {
                 t = get_next_token();
             }
-            else if(t.type_ == token::e_comment_begin)
+            else if (t.type_ == token::e_comment_begin)
             {
                 mutil_line = true;
                 t = get_next_token();
@@ -1237,17 +1239,17 @@ namespace acl
                     throw syntax_error();
 
                 func.sql_mutil_line_ = mutil_line;
-                if(!mutil_line)
+                if (!mutil_line)
                 {
                     func.sql_ += line_buffer_.
-                            substr(0,line_buffer_.find_last_of('}'));
+                        substr(0, line_buffer_.find_last_of('}'));
                     func.sql_params_ = get_sql_param();
                 }
                 else
                 {
                     func.sql_ = get_string('}');
                     func.sql_params_ = get_sql_param();
-                    while(get_next_token().type_ != token::e_comment_end);
+                    while (get_next_token().type_ != token::e_comment_end);
                 }
 
                 token t2 = get_next_token();
@@ -1288,7 +1290,7 @@ namespace acl
                 {
                     if (func.params_.empty())
                         throw syntax_error("{select} type function params "
-                                                   "must not empty");
+                                           "must not empty");
                 }
                 update_mapper_function_columns(func);
                 t = get_next_token();
@@ -1330,20 +1332,20 @@ namespace acl
                 //std::cout << current_line_.c_str();
                 continue;
             }
-            else if(t.type_ == token::e_namespace)
+            else if (t.type_ == token::e_namespace)
             {
                 skip_comment();
                 t = get_next_token();
-                if(t.type_ != token::e_identifier)
+                if (t.type_ != token::e_identifier)
                     throw syntax_error("");
                 skip_comment();
-                if(get_next_token().type_ != token::e_open_curly_brace)
+                if (get_next_token().type_ != token::e_open_curly_brace)
                     throw syntax_error("not find {");
                 namespaces_.push_back(t.str_);
             }
-            else if(t.type_ == token::e_close_curly_brace)
+            else if (t.type_ == token::e_close_curly_brace)
             {
-                if(namespaces_.empty())
+                if (namespaces_.empty())
                     throw syntax_error("unknown } token");
                 namespaces_.pop_back();
             }
@@ -1363,7 +1365,7 @@ namespace acl
             }
             else if (t.type_ == token::e_eof)
             {
-                if(namespaces_.size())
+                if (namespaces_.size())
                     throw syntax_error();
                 return true;
             }
@@ -1389,21 +1391,21 @@ namespace acl
                 //std::cout << current_line_.c_str();
                 continue;
             }
-            else if(t.type_ == token::e_namespace)
+            else if (t.type_ == token::e_namespace)
             {
                 skip_comment();
                 t = get_next_token();
-                if(t.type_ != token::e_identifier)
+                if (t.type_ != token::e_identifier)
                     throw syntax_error("");
                 skip_comment();
-                if(get_next_token().type_ != token::e_open_curly_brace)
+                if (get_next_token().type_ != token::e_open_curly_brace)
                     throw syntax_error("not find {");
                 namespaces_.push_back(t.str_);
 
             }
-            else if(t.type_ == token::e_close_curly_brace)
+            else if (t.type_ == token::e_close_curly_brace)
             {
-                if(namespaces_.empty())
+                if (namespaces_.empty())
                     throw syntax_error("error }");
                 namespaces_.pop_back();
             }
@@ -1449,7 +1451,7 @@ namespace acl
 
         return false;
     }
-    
+
     std::string dao_generator::get_class_name(const std::string &parent_name)
     {
         acl::string class_name = parent_name.c_str();
@@ -1466,8 +1468,8 @@ namespace acl
         return class_name.c_str();
     }
     std::string dao_generator::gen_func_impl_name(
-            const std::string &class_name,
-            const std::string &declare_)
+        const std::string &class_name,
+        const std::string &declare_)
     {
         std::string code = declare_;
         skip_space(code);
@@ -1498,7 +1500,7 @@ namespace acl
         return std::string();
     }
     std::string dao_generator::gen_annotation(
-            const mapper_function &func, bool tab_)
+        const mapper_function &func, bool tab_)
     {
         std::string code;
         if (func.type_ == mapper_function::e_insert)
@@ -1511,16 +1513,16 @@ namespace acl
             code += "@Select{";
         code += func.sql_ + "}";
 
-        if(func.sql_mutil_line_)
+        if (func.sql_mutil_line_)
         {
-            code  = "/*" +code +"*/";
+            code = "/*" + code + "*/";
         }
         else
         {
             code = "//" + code;
         }
         code += br;
-        if(tab_)
+        if (tab_)
             code = tab + code;
 
 
@@ -1542,7 +1544,7 @@ namespace acl
         std::string code;
 
         code += "class " + class_name + ": public " +
-                namespace_to_string(m.namespaces_) + m.name_ + br;
+            namespace_to_string(m.namespaces_) + m.name_ + br;
 
         code += "{" + br;
         code += "public:" + br;
@@ -1570,7 +1572,7 @@ namespace acl
         return code;
     }
     std::string dao_generator::gen_query_set_parameters(
-            const mapper_function &func)
+        const mapper_function &func)
     {
         std::string code;
         if (func.sql_params_.empty())
@@ -1642,26 +1644,26 @@ namespace acl
         {
             return std::string("atoll(") + str + ");";
         }
-        else if (f.type_ == field::e_float|| 
+        else if (f.type_ == field::e_float ||
                  f.type_ == field::e_double)
         {
             return std::string("atof(") + str + ");";
         }
         return str + ";";
     }
-    
+
 
     std::string dao_generator::get_define_columns(
-            const std::vector<field> &fields,
-            const std::string &prefix,
-            const std::string &tabs,
-            bool _br)
+        const std::vector<field> &fields,
+        const std::string &prefix,
+        const std::string &tabs,
+        bool _br)
     {
         std::string code;
 
         for (size_t j = 0; j < fields.size(); j++)
         {
-            code += tabs + get_define_column(fields[j],prefix,_br);
+            code += tabs + get_define_column(fields[j], prefix, _br);
         }
         return code;
     }
@@ -1670,9 +1672,9 @@ namespace acl
                                                  bool _br)
     {
         std::string buffer;
-        buffer = std::string ("const char* ") + prefix +f.column_ +
-                " = (*row)[\"" +f.column_ + "\"];";
-        if(_br)
+        buffer = std::string("const char* ") + prefix + f.column_ +
+            " = (*row)[\"" + f.column_ + "\"];";
+        if (_br)
             buffer += br;
         return buffer;
     }
@@ -1681,7 +1683,7 @@ namespace acl
         std::string code;
 
         std::string sql = skip_multi_space(
-                replace(skip_all(func.sql_, "\r\n"),'\t',' '));
+            replace(skip_all(func.sql_, "\r\n"), '\t', ' '));
 
 
         code += tab + "acl::query query;" + br;
@@ -1693,7 +1695,7 @@ namespace acl
         if (func.log_)
         {
             code += tab + "logger(\"sql: %s\", "
-                                  "query.to_string().c_str());" + br;
+                "query.to_string().c_str());" + br;
             code += br;
         }
 
@@ -1704,14 +1706,14 @@ namespace acl
             code += tab + "if (!db_handle_.exec_update(query))" + br;
             code += tab + "{" + br;
             code += tab + tab + "logger_error(\"exec_update() failed :%s\","
-                                        "db_handle_.get_error());" + br;
+                "db_handle_.get_error());" + br;
             code += tab + tab + "return false;" + br;
             code += tab + "}" + br;
 
             code += tab + "if (!db_handle_.commit())" + br;
             code += tab + "{" + br;
             code += tab + tab + "logger_error(\"commit() failed :%s\","
-                                        "db_handle_.get_error());" + br;
+                "db_handle_.get_error());" + br;
             code += tab + tab + "return false;" + br;
             code += tab + "}" + br;
 
@@ -1723,8 +1725,8 @@ namespace acl
             code += tab + "if (!db_handle_.exec_select(query))" + br;
             code += tab + "{" + br;
             code += tab + tab + "logger_error(\"exec_select() "
-                                        "failed :%s\",db_handle_."
-                                        "get_error());" + br;
+                "failed :%s\",db_handle_."
+                "get_error());" + br;
             code += tab + tab + "return false;" + br;
             code += tab + "}" + br;
             code += br;
@@ -1732,14 +1734,14 @@ namespace acl
             if (func.params_.front().type_ == field::e_entry)
             {
                 code += tab + "for (size_t i = 0; i < "
-                                      "db_handle_.length(); ++i)" + br;
+                    "db_handle_.length(); ++i)" + br;
                 code += tab + "{" + br;
 
                 code += tab + tab + "const acl::db_row* row = d"
-                                            "b_handle_[i];" + br + br;
+                    "b_handle_[i];" + br + br;
 
                 std::vector<field> &fields = func.
-                        params_[0].entry_->fields_;
+                    params_[0].entry_->fields_;
 
                 std::string result = func.params_[0].name_;
 
@@ -1748,14 +1750,14 @@ namespace acl
                 {
                     field &f = fields[i];
                     if (f.type_ == field::e_entry ||
-                            f.type_ == field::e_vector)
+                        f.type_ == field::e_vector)
                     {
                         code += br;
-                        code +=get_define_columns(f.entry_->fields_,"$$",tab2);
+                        code += get_define_columns(f.entry_->fields_, "$$", tab2);
                     }
                     else
                     {
-                        code += tab2 + get_define_column(f,"$");
+                        code += tab2 + get_define_column(f, "$");
                     }
                 }
 
@@ -1766,14 +1768,14 @@ namespace acl
                 {
                     field &f = fields[i];
                     if (f.type_ != field::e_entry &&
-                            f.type_ != field::e_vector)
+                        f.type_ != field::e_vector)
                     {
                         code += tab + tab + "if(" + "$" +
-                                f.column_ + ")" + br;
+                            f.column_ + ")" + br;
                         code += tab + tab + tab + result +
-                                "." + f.name_ + " = ";
+                            "." + f.name_ + " = ";
                         code += get_assign_code(f, "$" +
-                                f.column_) + br;
+                                                f.column_) + br;
                     }
                 }
 
@@ -1788,11 +1790,11 @@ namespace acl
                         {
                             field &child = fields2[j];
                             code += tab + tab + "if($$" +
-                                    child.column_ + ")" + br;
+                                child.column_ + ")" + br;
                             code += tab + tab + tab + result + "." +
-                                    f.name_ + "." + child.name_ + " = ";
+                                f.name_ + "." + child.name_ + " = ";
                             code += get_assign_code(child, "$$" +
-                                    child.column_) + br;
+                                                    child.column_) + br;
                         }
                     }
                 }
@@ -1802,11 +1804,11 @@ namespace acl
                     field &f = fields[i];
                     if (f.type_ == field::e_vector)
                     {
-                        std::string item  = "$item";
+                        std::string item = "$item";
                         code += br;
                         code += tab + tab +
-                                namespace_to_string(f.entry_->namespaces_)+
-                                f.entry_->name_ +" "+item+ ";"+br;
+                            namespace_to_string(f.entry_->namespaces_) +
+                            f.entry_->name_ + " " + item + ";" + br;
 
                         std::vector<field> &fields2 = f.entry_->fields_;
 
@@ -1814,15 +1816,15 @@ namespace acl
                         {
                             field &child = fields2[j];
                             code += tab + tab + "if($$" +
-                                    child.column_ + ")" + br;
-                            code += tab + tab + tab +item+"." +
-                                    child.name_ + " = ";
+                                child.column_ + ")" + br;
+                            code += tab + tab + tab + item + "." +
+                                child.name_ + " = ";
                             code += get_assign_code(child, "$$" +
-                                    child.column_) + br;
+                                                    child.column_) + br;
                         }
 
                         code += tab + tab + result + "." + f.name_ +
-                                ".push_back("+item+");" + br;
+                            ".push_back(" + item + ");" + br;
                     }
                 }
 
@@ -1834,28 +1836,28 @@ namespace acl
                 std::string obj = "$item";
 
                 code += tab + "for (size_t i = 0; "
-                                      "i < db_handle_.length(); ++i)" + br;
+                    "i < db_handle_.length(); ++i)" + br;
                 code += tab + "{" + br;
                 code += tab + tab +
-                        namespace_to_string(func.params_.
-                                front().entry_->namespaces_) +
-                        func.params_.front().entry_->name_ +
-                        " " + obj + ";" + br;
+                    namespace_to_string(func.params_.
+                                        front().entry_->namespaces_) +
+                    func.params_.front().entry_->name_ +
+                    " " + obj + ";" + br;
                 code += tab + tab + "const acl::db_row* row "
-                                            "= db_handle_[i];" +
-                        br + br;
+                    "= db_handle_[i];" +
+                    br + br;
 
                 std::vector<field> &fields = func.
-                        params_[0].entry_->fields_;
+                    params_[0].entry_->fields_;
 
                 //const char* column = (*row)["column"];
                 for (size_t i = 0; i < fields.size(); i++)
                 {
                     field &f = fields[i];
                     if (!(f.type_ == field::e_entry ||
-                            f.type_ == field::e_vector))
+                          f.type_ == field::e_vector))
                     {
-                        code += tab2 + get_define_column(f,"$");
+                        code += tab2 + get_define_column(f, "$");
                     }
                 }
 
@@ -1868,7 +1870,7 @@ namespace acl
                     if (f.type_ == field::e_entry)
                     {
                         code += br;
-                        code += get_define_columns(f.entry_->fields_,"$$",tab2);
+                        code += get_define_columns(f.entry_->fields_, "$$", tab2);
                     }
                 }
 
@@ -1879,12 +1881,12 @@ namespace acl
                 {
                     field &f = fields[i];
                     if (f.type_ != field::e_entry &&
-                            f.type_ != field::e_vector)
+                        f.type_ != field::e_vector)
                     {
                         code += tab + tab +
-                                "if(" + "$" + f.column_ + ")" + br;
+                            "if(" + "$" + f.column_ + ")" + br;
                         code += tab + tab + tab +
-                                obj + "." + f.name_ + " = ";
+                            obj + "." + f.name_ + " = ";
                         code += get_assign_code(f, "$" + f.column_) + br;
                     }
                 }
@@ -1900,12 +1902,12 @@ namespace acl
                         {
                             field &child = fields2[l];
                             code += tab + tab + "if($$" +
-                                    child.column_ + ")" + br;
+                                child.column_ + ")" + br;
                             code += tab + tab + tab + obj +
-                                    "." + f.name_ + "." +
-                                    child.name_ + " = ";
+                                "." + f.name_ + "." +
+                                child.name_ + " = ";
                             code += get_assign_code(child, "$$" +
-                                    child.column_) + br;
+                                                    child.column_) + br;
                         }
                     }
                 }
@@ -1918,12 +1920,12 @@ namespace acl
                     {
                         code += br;
                         code += tab + tab +
-                                "for (; i< db_handle_.length(); i++)" + br;
+                            "for (; i< db_handle_.length(); i++)" + br;
                         code += tab + tab + "{" + br;
                         std::string item = "$$item";
                         code += tab + tab + tab +
-                                namespace_to_string(f.entry_->namespaces_)+
-                                f.entry_->name_ + " " + item + ";";
+                            namespace_to_string(f.entry_->namespaces_) +
+                            f.entry_->name_ + " " + item + ";";
 
                         std::vector<field> &fields2 = f.entry_->fields_;
                         code += br;
@@ -1932,8 +1934,8 @@ namespace acl
                         {
                             field &f2 = fields2[k];
                             code += tab + tab + tab + "const char* " +
-                                    "$$" + f2.column_ +
-                                    " = (*row)[\"" + f2.column_ + "\"];" + br;
+                                "$$" + f2.column_ +
+                                " = (*row)[\"" + f2.column_ + "\"];" + br;
                         }
                         code += br;
 
@@ -1941,13 +1943,13 @@ namespace acl
                         {
                             field &child = fields[ii];
                             if (!(child.type_ == field::e_entry ||
-                                    child.type_ == field::e_vector))
+                                  child.type_ == field::e_vector))
                             {
                                 code += tab + tab + tab +
-                                        "const char* " +
-                                        "$$$" + child.column_ +
-                                        " = (*row)[\"" +
-                                        child.column_ + "\"];" + br;
+                                    "const char* " +
+                                    "$$$" + child.column_ +
+                                    " = (*row)[\"" +
+                                    child.column_ + "\"];" + br;
                             }
                         }
                         code += br;
@@ -1968,12 +1970,12 @@ namespace acl
                         {
                             field &child = fields[j];
                             if (!(child.type_ == field::e_entry ||
-                                    child.type_ == field::e_vector))
+                                  child.type_ == field::e_vector))
                             {
                                 if (j != 0)
                                     code += tab4;
                                 code += "!streq($$$" + child.column_ + ", $" +
-                                        child.column_ + ")";
+                                    child.column_ + ")";
 
                                 if (j == fields.size() - 2)
                                     code += ")" + br;
@@ -2001,15 +2003,15 @@ namespace acl
                         }
                         code += br;
                         code += tab3 + obj + "." +
-                                f.name_ + ".push_back(" + item + ");" + br;
+                            f.name_ + ".push_back(" + item + ");" + br;
 
                         code += br;
                         code += tab + tab + "}" + br;
                     }
                 }
                 code += br;
-                code += tab + tab + func.params_.front().name_+
-                        ".push_back(" + obj + ");" + br;
+                code += tab + tab + func.params_.front().name_ +
+                    ".push_back(" + obj + ");" + br;
                 code += tab + "}" + br;
                 code += tab + "return db_handle_.length() != 0;" + br;
             }
@@ -2024,7 +2026,7 @@ namespace acl
         std::string class_name = get_class_name(m.name_);
 
         code += class_name + "::" + class_name +
-                "(acl::db_handle& handle)" + br;
+            "(acl::db_handle& handle)" + br;
 
         code += tab + ":db_handle_(handle)" + br;
         code += "{" + br;
@@ -2051,8 +2053,8 @@ namespace acl
     }
     std::string dao_generator::gen_streq_code()const
     {
-            return "static inline bool streq(const char *left, "
-                           "const char *right)" + br +
+        return "static inline bool streq(const char *left, "
+            "const char *right)" + br +
             "{" + br +
             tab + "if (!left && !right)" + br +
             tab + tab + "return true;" + br +
@@ -2140,13 +2142,13 @@ namespace acl
         if (source_file.write(buffer.c_str(), buffer.size()) == -1)
         {
             printf("write file error,%s", acl::last_serror());
-            return ;
+            return;
         }
 
         if (source_file.write(source_code.c_str(), source_code.size()) == -1)
         {
             printf("write file error,%s", acl::last_serror());
-            return ;
+            return;
         }
     }
 
@@ -2176,57 +2178,57 @@ namespace acl
             acl::ofstream file;
 
             std::string class_name = get_class_name(m.name_);
-            header_file = base_path+class_name+".h";
-            source_file = base_path+class_name+".cpp";
+            header_file = base_path + class_name + ".h";
+            source_file = base_path + class_name + ".cpp";
 
-            header_code += "#pragma once" +br2;
+            header_code += "#pragma once" + br2;
             header_code += gen_class_declare(m);
 
             source_code += gen_class_implement(m);
 
 
-            if(!file.open_trunc(header_file.c_str()))
+            if (!file.open_trunc(header_file.c_str()))
             {
                 printf("open file error%s\n", acl::last_serror());
-                return ;
+                return;
             }
-            if(file.write(header_code.c_str(), header_code.size()) == -1)
+            if (file.write(header_code.c_str(), header_code.size()) == -1)
             {
                 printf("write file error%s\n", acl::last_serror());
                 file.close();
-                return ;
+                return;
             }
 
             file.close();
 
-            if(!file.open_trunc(source_file.c_str()))
+            if (!file.open_trunc(source_file.c_str()))
             {
                 printf("open file error%s\n", acl::last_serror());
-                return ;
+                return;
             }
             std::string code;
             code += "#include \"acl_cpp/lib_acl.hpp\"" + br;
             for (std::set<std::string>::iterator it = m.model_files_.begin();
-                    it != m.model_files_.end(); ++it)
+                 it != m.model_files_.end(); ++it)
             {
-                code += "#include \"" + get_filename(*it) + "\""+br;
+                code += "#include \"" + get_filename(*it) + "\"" + br;
             }
             code += "#include \"" + get_filename(m.mapper_path_) + "\"" + br2;
-            code += "#include \""+class_name+".h\""+br2;
-            if(use_streq_)
+            code += "#include \"" + class_name + ".h\"" + br2;
+            if (use_streq_)
                 code += gen_streq_code();
 
-            if(file.write(code.c_str(), code.size()) == -1)
+            if (file.write(code.c_str(), code.size()) == -1)
             {
                 printf("write file error%s\n", acl::last_serror());
                 file.close();
-                return ;
+                return;
             }
-            if(file.write(source_code.c_str(), source_code.size()) == -1)
+            if (file.write(source_code.c_str(), source_code.size()) == -1)
             {
                 printf("write file error%s\n", acl::last_serror());
                 file.close();
-                return ;
+                return;
             }
             file.close();
             dao_includes.push_back(header_file);
@@ -2244,7 +2246,7 @@ namespace acl
             return;
         }
 
-        includes_codes += "#pragma once"+br;
+        includes_codes += "#pragma once" + br;
 
         for (size_t i = 0; i < dao_includes.size(); i++)
         {
@@ -2276,7 +2278,7 @@ namespace acl
 
         for (size_t i = 0; i < func.params_.size(); i++)
         {
-            printf(  "  func_params:{type=%s, name=%s}\n",
+            printf("  func_params:{type=%s, name=%s}\n",
                    func.params_[i].type_str_.c_str(),
                    func.params_[i].name_.c_str());
         }
@@ -2285,13 +2287,13 @@ namespace acl
 
         for (size_t i = 0; i < func.columns_.size(); i++)
         {
-            printf(  "  column     :{columns=%s, property=%s}\n", 
-                   func.columns_[i].column_.c_str(), 
+            printf("  column     :{columns=%s, property=%s}\n",
+                   func.columns_[i].column_.c_str(),
                    func.columns_[i].property_.c_str());
         }
         for (size_t i = 0; i < func.sql_params_.size(); i++)
         {
-            std::cout << "  sql_param  :" << func.sql_params_[i]<< std::endl;
+            std::cout << "  sql_param  :" << func.sql_params_[i] << std::endl;
         }
 
     }
@@ -2299,7 +2301,7 @@ namespace acl
     {
         std::cout << "  name      :" << m.name_ << std::endl;
         std::cout << "  file_path :" << m.mapper_path_ << std::endl;
-        std::cout << "  func_size :" <<m.mfuncs_.size()<< std::endl;
+        std::cout << "  func_size :" << m.mfuncs_.size() << std::endl;
 
         for (size_t i = 0; i < m.mfuncs_.size(); i++)
         {
@@ -2322,7 +2324,7 @@ namespace acl
         std::cout << "  table_name  :" << _entry.table_name_ << std::endl;
         std::cout << "  file_path   :" << _entry.filepath_ << std::endl;
         std::cout << "  is_model    :" << is_model << std::endl;
-        std::cout << "  field_size  :" << _entry.fields_.size()<<std::endl;
+        std::cout << "  field_size  :" << _entry.fields_.size() << std::endl;
 
 
         for (size_t i = 0; i < _entry.fields_.size(); i++)
@@ -2332,7 +2334,7 @@ namespace acl
             std::cout << "  name        :" << e.name_ << std::endl;
             std::cout << "  column_name :" << e.column_ << std::endl;
             if (e.entry_)
-            std::cout << "  entry_name  :" << e.entry_->name_ << std::endl;
+                std::cout << "  entry_name  :" << e.entry_->name_ << std::endl;
             std::cout << "  type_str    :" << e.type_str_ << std::endl;
         }
 
@@ -2342,7 +2344,7 @@ namespace acl
         for (size_t i = 0; i < mappers_.size(); i++)
         {
             std::cout << "-----------------------------------------"
-                "---------------------------------------"<< std::endl;
+                "---------------------------------------" << std::endl;
             print_mapper(mappers_[i]);
         }
     }
@@ -2354,7 +2356,7 @@ namespace acl
             print_entry(*it);
         }
     }
-    void merge(std::set<std::string> &left,const std::set<std::string> &right)
+    void merge(std::set<std::string> &left, const std::set<std::string> &right)
     {
         for (std::set<std::string>::const_iterator it = right.begin();
              it != right.end();
@@ -2373,7 +2375,7 @@ namespace acl
         //std::cout << "i:" << i << std::endl;
         return false;
     }
-    std::map<std::string, std::set<std::string>> g_includes;
+    std::map<std::string, std::set<std::string> > g_includes;
 
     std::set<std::string> dao_generator::get_include_files(const std::string &file_path)
     {
@@ -2388,7 +2390,7 @@ namespace acl
         if (!file_.open_read(file_path.c_str()))
         {
             printf("open file(%s) error %s\n",
-                   file_path.c_str(), 
+                   file_path.c_str(),
                    acl::last_serror());
             return includes;
         }
@@ -2412,15 +2414,15 @@ namespace acl
 
                 while (get_next_token().type_ != token::e_close_curly_brace);
             }
-            
+
         }
         g_includes[file_path] = includes;
 
         return includes;
     }
-    void insert(std::list<std::pair<int, std::string>> &result, 
-                     const std::string &file, 
-                     int size)
+    void insert(std::list<std::pair<int, std::string> > &result,
+                const std::string &file,
+                int size)
     {
         std::pair<int, std::string> item = std::make_pair(size, file);
 
@@ -2434,7 +2436,7 @@ namespace acl
         {
             if (it->first >= size)
             {
-                result.insert(it,item);
+                result.insert(it, item);
                 return;
             }
         }
@@ -2444,16 +2446,16 @@ namespace acl
     {
         std::cout << file << " include:" << std::endl;
 
-        for (std::set<std::string>::const_iterator it = includes.begin(); 
+        for (std::set<std::string>::const_iterator it = includes.begin();
              it != includes.end(); ++it)
         {
-            std::cout <<" >> "<<it->c_str() << std::endl;
+            std::cout << " >> " << it->c_str() << std::endl;
         }
     }
     std::vector<std::string>
         dao_generator::parse_include(const std::vector<std::string> &files)
     {
-        std::list<std::pair<int, std::string>> sort_list;
+        std::list<std::pair<int, std::string> > sort_list;
         std::vector<std::string> result;
 
         g_model_files = (int)files.size();
@@ -2481,7 +2483,7 @@ namespace acl
         for (size_t i = 0; i < files.size(); ++i)
         {
             acl::ifstream file;
-            if(!file.open_read(files[i].c_str()))
+            if (!file.open_read(files[i].c_str()))
             {
                 printf("open file error. %s\n", acl::last_serror());
                 continue;
@@ -2489,7 +2491,7 @@ namespace acl
 
             acl::string buffer;
             file.gets(buffer, true);
-            if(buffer.empty())
+            if (buffer.empty())
             {
                 file.close();
                 continue;
@@ -2497,16 +2499,16 @@ namespace acl
 
             const char * mappers = "//@Mappers";
             const char * models = "//@Models";
-            if(acl_strrncasecmp(mappers ,
-                                buffer.c_str(),
-                                strlen(mappers)) == 0)
+            if (acl_strrncasecmp(mappers,
+                                 buffer.c_str(),
+                                 strlen(mappers)) == 0)
             {
                 mapper_files.push_back(files[i]);
 
             }
-            else if(acl_strrncasecmp(models ,
-                                     buffer.c_str(),
-                                     strlen(models ))== 0)
+            else if (acl_strrncasecmp(models,
+                                      buffer.c_str(),
+                                      strlen(models)) == 0)
             {
                 model_files.push_back(files[i]);
             }
@@ -2516,7 +2518,7 @@ namespace acl
 
         for (size_t j = 0; j < model_files.size(); ++j)
         {
-            if(!parse_file(model_files[j]))
+            if (!parse_file(model_files[j]))
             {
                 printf("parse_file error %s\n", model_files[j].c_str());
                 return false;
@@ -2525,7 +2527,7 @@ namespace acl
 
         for (size_t k = 0; k < mapper_files.size(); ++k)
         {
-            if(!parse_file(mapper_files[k]))
+            if (!parse_file(mapper_files[k]))
             {
                 printf("parse_file error %s\n", model_files[k].c_str());
                 return false;
