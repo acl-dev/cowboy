@@ -2365,22 +2365,23 @@ namespace acl
             left.insert(*it);
         }
     }
-    int g_model_files = 0;
+    int g_model_file_count = 0;
     bool dead_loop()
     {
         static int i = 0;
         i++;
-        if (i > g_model_files * 2)
+        if (i > g_model_file_count * 2)
             return true;
         //std::cout << "i:" << i << std::endl;
         return false;
     }
     std::map<std::string, std::set<std::string> > g_includes;
+    std::map<std::string, std::string> g_model_files;
 
     std::set<std::string> dao_generator::get_include_files(const std::string &file_path)
     {
-        if (g_includes.find(file_path) != g_includes.end())
-            return g_includes[file_path];
+        if (g_includes.find(get_filename(file_path)) != g_includes.end())
+            return g_includes[get_filename(file_path)];
 
         if (dead_loop())
             throw syntax_error("parse //@include{} detect dead_loop");
@@ -2407,16 +2408,19 @@ namespace acl
                 if (get_next_token().type_ != token::e_open_curly_brace)
                     throw syntax_error("not found { >>" + t.str_);
                 std::string str = get_string('}');
+                if(g_model_files.find(str) == g_model_files.end())
+                    throw syntax_error("not found file :" + str);
+                str = g_model_files[str];
                 includes.insert(str);
+
                 dao_generator *gen = new dao_generator;
                 merge(includes, gen->get_include_files(str));
                 delete gen;
 
                 while (get_next_token().type_ != token::e_close_curly_brace);
             }
-
         }
-        g_includes[file_path] = includes;
+        g_includes[get_filename(file_path)] = includes;
 
         return includes;
     }
@@ -2458,11 +2462,16 @@ namespace acl
         std::list<std::pair<int, std::string> > sort_list;
         std::vector<std::string> result;
 
-        g_model_files = (int)files.size();
+        g_model_file_count = (int)files.size();
 
         for (size_t i = 0; i < files.size(); i++)
         {
-            std::set<std::string> includes = get_include_files(get_filename(files[i]));
+            g_model_files[get_filename(files[i])] = files[i];
+        }
+
+        for (size_t i = 0; i < files.size(); i++)
+        {
+            std::set<std::string> includes = get_include_files(files[i]);
             insert(sort_list, files[i], (int)includes.size());
             //print_include(files[i], includes);
         }

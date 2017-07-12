@@ -891,8 +891,16 @@ namespace acl
         return code;
     }
 
-    void model_generator::gen_model(const std::string &file_path)
+    void model_generator::gen_model(const std::string &path)
     {
+        std::string base_path(path);
+
+        if (base_path[base_path.size() - 1] != '/' &&
+            base_path[base_path.size() - 1] != '\\')
+            base_path.push_back('/');
+
+        std::string file_path = base_path +"models.h";
+
         std::string code;
 
         code += "//@Models" + br;
@@ -964,7 +972,7 @@ namespace acl
         std::string code;
         code += "#pragma once" + br;
 
-        file_path = base_path + "create_tables.h";
+        file_path = base_path + "create_tables.hpp";
 
         code += namespace_begin(namespaces_);
 
