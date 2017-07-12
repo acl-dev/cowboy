@@ -2426,7 +2426,7 @@ namespace acl
     {
         std::pair<int, std::string> item = std::make_pair(size, file);
 
-        std::list<std::pair<int, std::string>>::iterator it = result.begin();
+        std::list<std::pair<int, std::string > >::iterator it = result.begin();
         if (size == 0 || result.empty())
         {
             result.push_front(item);
@@ -2467,7 +2467,7 @@ namespace acl
             //print_include(files[i], includes);
         }
 
-        std::list<std::pair<int, std::string>>::iterator it = sort_list.begin();
+        std::list<std::pair<int, std::string> >::iterator it = sort_list.begin();
         for (; it != sort_list.end(); ++it)
         {
             result.push_back(it->second);
