@@ -21,9 +21,12 @@ include_directories(include
         ${ACL_ROOT}/lib_acl/include
         ${ACL_ROOT}/lib_acl_cpp/include)
 
-set(SOURCE_FILES
-        src/main.cpp
-        src/gen_dao.cpp)
+set(src ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set(sources ${src})
 
-add_executable(gen_dao ${SOURCE_FILES})
+foreach(iter ${sources})
+	aux_source_directory(${iter} SOURCES)
+endforeach()
+
+add_executable(gen_dao ${SOURCES})
 target_link_libraries(gen_dao ${depend_libs})
