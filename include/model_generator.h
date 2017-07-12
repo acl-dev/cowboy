@@ -135,7 +135,7 @@ namespace acl
         model_generator();
         void set_namespace(const std::vector<std::string> &namespaces);
         bool parse(const std::string &path);
-        void gen_model(const std::string &file_path);
+        void gen_model(const std::string &path);
         void gen_models(const std::string &path);
         void gen_create_tables(const std::string &path);
         void gen_mapper(const std::string &path);

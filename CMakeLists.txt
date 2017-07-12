@@ -28,5 +28,5 @@ foreach(iter ${sources})
 	aux_source_directory(${iter} SOURCES)
 endforeach()
 
-add_executable(gen_dao ${SOURCES})
-target_link_libraries(gen_dao ${depend_libs})
+add_executable(cowboy ${SOURCES})
+target_link_libraries(cowboy ${depend_libs})

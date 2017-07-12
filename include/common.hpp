@@ -124,7 +124,7 @@ namespace acl
         const char* file_path = NULL;
 
         acl::scan_dir scan;
-        if (!scan.open(path.c_str(), false))
+        if (!scan.open(path.c_str(), true))
         {
             printf("scan open error %s\n",
                    acl::last_serror());
