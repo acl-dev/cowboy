@@ -742,8 +742,11 @@ namespace acl
                 }
             }
         }
-        if (code.back() == ',')
-            code.pop_back();
+        if (code[code.size() - 1] == ',')
+        {
+            code.erase(code.end()-1);
+        }
+            
 
         code += br + tab + "{" + br;
 
@@ -825,15 +828,19 @@ namespace acl
             const field &f = t.fields_[i];
             if (!f.auto_increase_)
             {
-                update += f.name_ + "=:" + f.name_ + ",";
-                insert += f.name_ + ",";
-                insert_value += ":" + f.name_ + ",";
+                update += f.name_ + "=:" + f.name_;
+                insert += f.name_;
+                insert_value += ":" + f.name_;
+                if (i < t.fields_.size()-1)
+                {
+                    update.push_back(',');
+                    insert.push_back(',');
+                    insert_value.push_back(',');
+                }
             }
         }
-        insert_value.pop_back();
         insert_value += ")}";
 
-        insert.pop_back();
         insert += ")";
         insert += insert_value + br;
         insert += tab + "virtual bool insert(const " + 
@@ -848,7 +855,6 @@ namespace acl
         $delete += tab + "virtual bool del(" + pkey_type + 
             primary_key.name_ + ")=0;" + br;
 
-        update.pop_back();
         update += " where " + pkey + " = :" + pkey + " }" + br;
         update += tab + "virtual bool update(const " + name + " &obj)=0;" + br;
 
