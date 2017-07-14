@@ -7,19 +7,27 @@
 static void usage(...)
 {
     printf("usage: \n"
-           "    -h          [help]\r\n"
-           "    -o          [parse mapper + model generate dao]\r\n"
-           "    -u          [parse sql files generate model + mapper file]\r\n"
-           "    -m          [generate multifile,default generate single]\r\n"
-           "    -x          [generate dao to 'dao',\r\n"
-           "                 generate mapper to 'mapper',\r\n"
-           "                 generate model to 'model',\r\n"
-           "                 generate create_tables.hpp to create_tables ]\r\n"
-           "    -s path     [path to scan,default current dir]\r\n"
-           "    -d path     [generate dao path,default current dir]\r\n"
-           "    -c path     [generate mapper file path,default current dir]\r\n"
-           "    -k path     [generate model file path,default current dir]\r\n"
-           "    -j path     [generate create_tables.hpp file path,default current dir]\r\n\r\n\r\n");
+           "    -h                        'help'\r\n"
+           "    -o                        'parse mapper + model generate dao'\r\n"
+           "    -u                        'parse sql files generate model + mapper file'\r\n"
+           "    -m                        'generate multifile,file per table,default generate single'\r\n"
+           "    -x                        'generate dao to 'dao',\r\n"
+           "                              'generate mapper to 'mapper',\r\n"
+           "                              'generate model to 'model',\r\n"
+           "                              'generate create_tables.hpp to create_tables '\r\n"
+           "    -s scan_path              'path to scan,default current dir'\r\n"
+           "    -d dao_path               'generate dao path,default current dir'\r\n"
+           "    -c mapper_path            'generate mapper file path,default current dir'\r\n"
+           "    -k model_path             'generate model file path,default current dir'\r\n"
+           "    -j create_tables_path     'generate create_tables.hpp file path,default current dir'\r\n\r\n\r\n"
+           "about:\r\n"
+           "     scan_path:the path cowboy to scan.it will scan files with *.sql when with -u\r\n"
+           "               and scan *.h files with -o \r\n\r\n"
+           "eg:\r\n"
+           "./cow_boy -u -o\r\n"
+           "./cow_boy -u -o -x\r\n"
+           "./cow_boy -u -o -x -m\r\n"
+           "./cow_boy -u -o -d daos -c mappers -k models -j create_table\r\n\r\n");
 }
 
 
