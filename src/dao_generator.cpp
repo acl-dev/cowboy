@@ -189,14 +189,53 @@ namespace acl
                 t.str_ = "#pragma once";
             }
         }
+        else if (str == "unsigned")
+        {
+            str = next_token(delimiters);
+            if (str == "int")
+            {
+                t.type_ = token::e_unsigned_int;
+                t.str_ = "unsigned int";
+
+            }else if(str == "char")
+            {
+                t.type_ = token::e_unsigned_char;
+                t.str_ = "unsigned char";
+            }
+            else if (str == "long")
+            {
+                if (next_token(delimiters) == "long" &&
+                    next_token(delimiters) == "int")
+                {
+                    t.type_ = token::e_unsigned_long_long_int;
+                    t.str_ = "unsigned long long int";
+                }
+                else
+                {
+                    throw syntax_error("unknow type: "+current_line_);
+                }
+            }
+        }
         else if (str == "long")
         {
             if (next_token(delimiters) == "long" &&
                 next_token(delimiters) == "int")
             {
                 t.type_ = token::e_long_long_int;
+                t.str_ = "long long int";
             }
-            throw syntax_error("unknow type");
+            else
+            {
+                throw syntax_error("unknow type");
+            }
+        }
+        else if (str == "char")
+        {
+            t.type_ = token::e_char;
+        }
+        else if (str == "short")
+        {
+            t.type_ = token::e_short;
         }
         else if (str == "int")
         {
@@ -470,6 +509,10 @@ namespace acl
         {
             return field::e_int;
         }
+        else if (type == token::e_unsigned_int)
+        {
+            return field::e_unsigned_int;
+        }
         else if (type == token::e_float)
         {
             return field::e_float;
@@ -493,6 +536,26 @@ namespace acl
         else if (type == token::e_long_long_int)
         {
             return field::e_long_long_int;
+        }
+        else if (type == token::e_unsigned_long_long_int)
+        {
+            return field::e_unsigned_long_long_int;
+        }
+        else if (type == token::e_char)
+        {
+            return field::e_char;
+        }
+        else if (type == token::e_unsigned_char)
+        {
+            return field::e_unsigned_char;
+        }
+        else if (type == token::e_short)
+        {
+            return field::e_short;
+        }
+        else if (type == token::e_unsigned_short)
+        {
+            return field::e_unsigned_short;
         }
         throw syntax_error();
         return 0;
@@ -572,30 +635,34 @@ namespace acl
 
         reset_lexer();
         reset_status();
+
+        if (!file_.open_read(file_path.c_str()))
+        {
+            printf("open file error %s\n", acl::last_serror());
+            return false;
+        }
+        file_path_ = file_path;
+        token t = get_next_token();
+        if (t.type_ == token::e_comment)
+        {
+            t = get_next_token();
+            if (t.type_ == token::e_$models)
+            {
+                model_files_.insert(file_path);
+                return parse_model_file();
+            }
+            else
+            {
+                mapper_files_.insert(file_path);
+                return parse_mapper_file();
+            }
+        }
+        return false;
+
+
         try
         {
-            if (!file_.open_read(file_path.c_str()))
-            {
-                printf("open file error %s\n", acl::last_serror());
-                return false;
-            }
-            file_path_ = file_path;
-            token t = get_next_token();
-            if (t.type_ == token::e_comment)
-            {
-                t = get_next_token();
-                if (t.type_ == token::e_$models)
-                {
-                    model_files_.insert(file_path);
-                    return parse_model_file();
-                }
-                else
-                {
-                    mapper_files_.insert(file_path);
-                    return parse_mapper_file();
-                }
-            }
-            return false;
+            
         }
         catch (std::exception &e)
         {
@@ -777,8 +844,20 @@ namespace acl
                     continue;
                 }
             }
+            else if (t1.type_ == token::e_comment_begin)
+            {
+                while (get_next_token().type_ != token::e_comment_end);
+                continue;
+            }
 
-            if (t1.type_ == token::e_int ||
+            if (t1.type_ == token::e_unsigned_int||
+                t1.type_ == token::e_unsigned_char||
+                t1.type_ == token::e_unsigned_short||
+                t1.type_ == token::e_unsigned_long_long_int||
+                t1.type_ == token::e_bool||
+                t1.type_ == token::e_char ||
+                t1.type_ == token::e_short ||
+                t1.type_ == token::e_int ||
                 t1.type_ == token::e_long_long_int ||
                 t1.type_ == token::e_float ||
                 t1.type_ == token::e_double ||
@@ -923,12 +1002,19 @@ namespace acl
             {
                 continue;
             }
-            else if (t.type_ == token::e_acl_string ||
-                     t.type_ == token::e_std_string ||
+            else if (t.type_ == token::e_unsigned_int ||
+                     t.type_ == token::e_unsigned_char ||
+                     t.type_ == token::e_unsigned_short ||
+                     t.type_ == token::e_unsigned_long_long_int ||
+                     t.type_ == token::e_bool ||
+                     t.type_ == token::e_char ||
+                     t.type_ == token::e_short ||
                      t.type_ == token::e_int ||
                      t.type_ == token::e_long_long_int ||
                      t.type_ == token::e_float ||
-                     t.type_ == token::e_double)
+                     t.type_ == token::e_double ||
+                     t.type_ == token::e_acl_string ||
+                     t.type_ == token::e_std_string)
             {
                 param.type_ = (field::type_t)to_field_type(t.type_);
                 param.type_str_ = t.str_;

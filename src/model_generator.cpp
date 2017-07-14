@@ -59,32 +59,41 @@ namespace acl
         std::string buffer;
         skip(line_buffer_, " \t\r\n");
 
-        while (line_buffer_.empty())
+        while (true)
         {
+            bool ok = false;
             if (line_buffer_.empty())
                 line_buffer_ = next_line();
             if (line_buffer_.empty())
                 return buffer;
             skip(line_buffer_, " \t\r\n");
-        }
 
-        for (size_t i = 0; i < line_buffer_.size(); i++)
-        {
-            char ch = line_buffer_[i];
-            if (delimiters.find(ch) == delimiters.npos)
+            for (size_t i = 0; i < line_buffer_.size(); i++)
             {
-                buffer.push_back(ch);
-            }
-            else
-            {
-                if (buffer.empty())
+                char ch = line_buffer_[i];
+                if (delimiters.find(ch) == delimiters.npos)
                 {
                     buffer.push_back(ch);
                 }
-                break;
+                else
+                {
+                    if (buffer.empty())
+                    {
+                        buffer.push_back(ch);
+                        line_buffer_ = line_buffer_.substr(i+1);
+                    }
+                    else
+                    {
+                        line_buffer_ = line_buffer_.substr(i);
+                    }
+                    ok = true;
+                    break;
+                }
             }
+            if (ok)
+                break;
+            line_buffer_.clear();
         }
-        line_buffer_ = line_buffer_.substr(buffer.size());
         return buffer;
     }
 
@@ -113,7 +122,7 @@ namespace acl
             current_token_ = t;
             return t;
         }
-        const std::string delimiters = " \r\n\t,()=`;-/";
+        const std::string delimiters = " \r\n\t,()=`';-/";
 
         std::string str = next_token(delimiters);
 
@@ -275,9 +284,21 @@ namespace acl
         {
             t.type_ = token::e_key;
         }
+        else if (str == "index")
+        {
+            t.type_ = token::e_index;
+        }
         else if (str == "pack_keys")
         {
             t.type_ = token::e_pack_keys;
+        }
+        else if (str == "bit")
+        {
+            t.type_ = token::e_bit;
+        }
+        else if (str == "bool")
+        {
+            t.type_ = token::e_bool;
         }
         else if (str == "tinyint")
         {
@@ -402,6 +423,10 @@ namespace acl
     {
         switch (t.type_)
         {
+            case token::e_bit:
+                return field::e_int;
+            case token::e_bool:
+                return field::e_bool;
             case token::e_tinyint:
                 return field::e_char;
             case token::e_mediumint:
@@ -420,6 +445,7 @@ namespace acl
 
             case token::e_date:
             case token::e_datetime:
+            case token::e_timestamp:
             case token::e_year:
             case token::e_time:
 
@@ -445,10 +471,19 @@ namespace acl
         if (t.type_ == token::e_quote)
         {
             buffer = next_token("'");
+            if (buffer == "'")
+                return "";
+            t = get_next_token();
+            if (t.type_ != token::e_quote)
+                throw syntax_error("not find `'`");
         }
         else if (t.type_ == token::e_double_quote)
         {
             buffer = next_token("\"");
+            if (buffer == "\"")
+                return "";
+            if (t.type_ != token::e_double_quote)
+                throw syntax_error("not find `\"`");
         }
         else if (t.type_ == token::e_now)
         {
@@ -509,8 +544,13 @@ namespace acl
                     f.type_len_.append(t.str_);
             }
         }
-
-        while (t.type_ != token::e_comma)
+        if (t.type_ == token::e_unsigned)
+        {
+            f.unsigned_ = true;
+            t = get_next_token();
+        }
+        while (t.type_ != token::e_comma && 
+               t.type_ != token::e_semicolon)
         {
             if (t.type_ == token::e_primary)
             {
@@ -551,11 +591,12 @@ namespace acl
             }
             else
             {
-                std::cout << t.str_ << std::endl;
+                //std::cout << t.str_ << std::endl;
             }
             t = get_next_token();
         }
-
+        if (t.type_ == token::e_semicolon)
+            push_back_token(t);
         return f;
     }
     void model_generator::parse_table()
@@ -585,10 +626,17 @@ namespace acl
                 t = get_next_token();
                 if (t.type_ != token::e_open_paren)
                     throw syntax_error("unknown token " + t.str_);
-                table_.primary_key_ = get_name();
-                t = get_next_token();
-                if (t.type_ != token::e_close_paren)
-                    throw syntax_error("unknown token " + t.str_);
+                do
+                {
+                    table_.primary_key_.append(get_name());
+                    t = get_next_token();
+                    if (t.type_ == token::e_comma)
+                    {
+                        table_.primary_key_.push_back(',');
+                    }
+                        
+                } while (t.type_ != token::e_close_paren);
+                
             }
             else if (t.type_ == token::e_engine)
             {
@@ -612,12 +660,23 @@ namespace acl
                     table_.charset_ = get_next_token().str_;
                 }
             }
+            else
+            {
+                while (true)
+                {
+                    t = get_next_token();
+                    if (t.type_ == token::e_semicolon)
+                        return;
+                    //std::cout << t.str_ << std::endl;
+                }
+            }
             t = get_next_token();
         }
 
     }
     void model_generator::parse()
     {
+
         do
         {
             token t = get_next_token();
@@ -640,7 +699,12 @@ namespace acl
                     table_.sql_.push_back(';');
 
                     parse_table();
+                    table_.file_path_ = file_path_;
                     tables_.push_back(table_);
+                }
+                else
+                {
+                    line_buffer_.clear();
                 }
             }
             else if (t.type_ == token::e_eof)
@@ -659,11 +723,13 @@ namespace acl
 
         for (size_t i = 0; i < files.size(); i++)
         {
-            if (file_.open_read(files[i].c_str()))
+            file_path_ = files[i];
+            lines_ = 0;
+            if (file_.open_read(file_path_.c_str()))
             {
+                parse();
                 try
                 {
-                    parse();
                 }
                 catch (const std::exception& e)
                 {
@@ -684,6 +750,8 @@ namespace acl
 
         switch (f.type_)
         {
+            case field::e_bool:
+                return "bool";
             case field::e_char:
                 code += "char";
                 break;
@@ -713,7 +781,11 @@ namespace acl
     std::string model_generator::gen_field(field &f)
     {
         std::string code;
-
+        if (!f.comment_.empty())
+        {
+            skip_all (f.comment_, "\t\r\n");
+            code += tab + "/*" + f.comment_+"*/"+br;
+        }
         code += tab + "//@Column{" + f.name_ + "}" + br;
         code += tab + get_type(f) + " " + f.name_ + ";";
 
@@ -758,6 +830,7 @@ namespace acl
     {
         std::string code;
 
+        code += "//file:"+ get_filename(t.file_path_) +br;
         code += "//@Model" + br;
         code += "//@Table{" + t.name_ + "}" + br;
         code += "struct " + t.name_ + br;
@@ -794,13 +867,17 @@ namespace acl
         std::string pkey_type;
 
         field primary_key = get_primary_key(t);
-        pkey_type = get_type(primary_key);
-        if (pkey_type == "std::string")
-            pkey_type = "const std::string &";
-        else
+        if (primary_key.name_.size())
         {
-            pkey_type += " ";
+            pkey_type = get_type(primary_key);
+            if (pkey_type == "std::string")
+                pkey_type = "const std::string &";
+            else
+            {
+                pkey_type += " ";
+            }
         }
+        
 
         code += "//@Mapper" + br;
         code += "struct " + name +"_mapper"+ br;
@@ -859,10 +936,14 @@ namespace acl
         update += tab + "virtual bool update(const " + name + " &obj)=0;" + br;
 
         code += insert + br;
-        code += update + br;
-        code += $delete + br;
-        code += select + br;
-        code += select_all + br;
+        if (!pkey_type.empty())
+            code += update + br;
+        if (!pkey_type.empty())
+            code += $delete + br;
+        if(!pkey_type.empty())
+            code += select + br;
+        if (!pkey_type.empty())
+            code += select_all + br;
         code += "};" + br;
         return code;
     }

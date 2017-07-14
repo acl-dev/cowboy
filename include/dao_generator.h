@@ -49,11 +49,24 @@ namespace acl
                 e_using,            // using  
                 e_namespace,        // namespace
                 e_const,            // const
+
+
+                e_char,
+                e_unsigned_char,
+
+                e_short,
+                e_unsigned_short,
+
+                e_int,
+                e_unsigned_int,     // int
+                
                 e_long_long_int,    // long long int
-                e_int,              // int
+                e_unsigned_long_long_int,
+
                 e_bool,             // bool
                 e_float,            // float
                 e_double,           // double
+                
                 e_time,             // time_t
                 e_void,             // void
                 e_virtual,          // virtual
@@ -94,8 +107,15 @@ namespace acl
             {
                 e_void,
                 e_bool,
-                e_long_long_int, // long long int
+                e_short,
+                e_unsigned_short,
+                e_char,
+                e_unsigned_char,
                 e_int,           // int
+                e_unsigned_int,
+                e_long_long_int, // long long int
+                e_unsigned_long_long_int, // long long int
+
                 e_float,         // float
                 e_double,        // double
                 e_string,        // acl::string ,std::string

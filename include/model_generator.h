@@ -33,10 +33,13 @@ namespace acl
                 e_comment_begin,    // /*
                 e_comment_end,      // */
                 e_key,              // key
+                e_index,            //
                 e_pack_keys,        // PACK_KEYS
                 e_drop,
                 e_now,              // NOW()
 
+                e_bit,
+                e_bool,
                 e_unsigned,         // UNSIGNED
                 e_tinyint,          // TINYINT
                 e_smallint,         // SMALLINT
@@ -99,6 +102,7 @@ namespace acl
             typedef enum type
             {
                 e_void,
+                e_bool,
                 e_char,
                 e_short,
                 e_int,
@@ -130,6 +134,7 @@ namespace acl
             std::string auto_increment_;
             std::vector<field> fields_;
             std::string sql_;
+            std::string file_path_;
         };
     public:
         model_generator();

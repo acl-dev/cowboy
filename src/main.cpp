@@ -11,6 +11,10 @@ static void usage(...)
            "    -o          [parse mapper + model generate dao]\r\n"
            "    -u          [parse sql files generate model + mapper file]\r\n"
            "    -m          [generate multifile,default generate single]\r\n"
+           "    -x          [generate dao to 'dao',\r\n"
+           "                 generate mapper to 'mapper',\r\n"
+           "                 generate model to 'model',\r\n"
+           "                 generate create_tables.hpp to create_tables ]\r\n"
            "    -s path     [path to scan,default current dir]\r\n"
            "    -d path     [generate dao path,default current dir]\r\n"
            "    -c path     [generate mapper file path,default current dir]\r\n"
@@ -32,23 +36,24 @@ int main(int argc, char *argv[])
     bool print = false;
     bool o = false;
     bool u = false;
+    bool x = false;
 
 
-    while ((ch = getopt(argc, argv, "pmouhs:d:c:k:j:")) > 0)
+    while ((ch = getopt(argc, argv, "pmouhxs:d:c:k:j:")) > 0)
     {
         switch (ch)
         {
             case 'c':
                 mapper_path = optarg;
-                acl_make_dirs(optarg, 755);
+                acl_make_dirs(optarg, 0755);
                 break;
             case 'k':
                 model_path = optarg;
-                acl_make_dirs(optarg, 755);
+                acl_make_dirs(optarg, 0755);
                 break;
             case 'j':
                 create_table_path = optarg;
-                acl_make_dirs(optarg, 755);
+                acl_make_dirs(optarg, 0755);
                 break;
             case 'o':
                 o = true;
@@ -56,12 +61,15 @@ int main(int argc, char *argv[])
             case 'u':
                 u = true;
                 break;
+            case 'x':
+                x = true;
+                break;
             case 's':
                 source_filepath = optarg;
                 break;
             case 'd':
                 dao_path = optarg;
-                acl_make_dirs(optarg,755);
+                acl_make_dirs(optarg, 0755);
                 break;
             case 'm':
                 mutilfile = true;
@@ -74,6 +82,29 @@ int main(int argc, char *argv[])
                 return 0;
             default:
                 break;
+        }
+    }
+    if (x)
+    {
+        if (dao_path == ("./"))
+        {
+            dao_path = "dao";
+            acl_make_dirs(dao_path.c_str(), 0755);
+        }
+        if (mapper_path == ("./"))
+        {
+            mapper_path = "mapper";
+            acl_make_dirs(mapper_path.c_str(), 0755);
+        }
+        if (model_path == ("./"))
+        {
+            model_path = "model";
+            acl_make_dirs(model_path.c_str(), 0755);
+        }
+        if (create_table_path == ("./"))
+        {
+            create_table_path = "create_table";
+            acl_make_dirs(create_table_path.c_str(), 0755);
         }
     }
 
