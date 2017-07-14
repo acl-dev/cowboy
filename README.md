@@ -24,9 +24,52 @@ cmake .. -DACL_ROOT=acl_path
 cowboy parse model files and mappers,and generate c++ code.
 
 ## how to use
-* first define models
+```
+akzi:~/code/dao_generator/cmake_build$ ./cowboy -h
+usage: 
+    -h                        'help'
+    -o                        'parse mapper + model generate dao'
+    -u                        'parse sql files generate model + mapper file'
+    -m                        'generate multifile,file per table,default generate single'
+    -x                        'generate dao to 'dao',
+                              'generate mapper to 'mapper',
+                              'generate model to 'model',
+                              'generate create_tables.hpp to create_tables '
+    -s scan_path              'path to scan,default current dir'
+    -d dao_path               'generate dao path,default current dir'
+    -c mapper_path            'generate mapper file path,default current dir'
+    -k model_path             'generate model file path,default current dir'
+    -j create_tables_path     'generate create_tables.hpp file path,default current dir'
 
-```cpp
+
+about:
+     scan_path:the path cowboy to scan.it will scan files with *.sql when with -u
+               and scan *.h files with -o 
+
+eg:
+./cow_boy -u -o
+./cow_boy -u -o -x
+./cow_boy -u -o -x -m
+./cow_boy -u -o -d daos -c mappers -k models -j create_table
+
+eg:
+./cow_boy -u -o
+./cow_boy -u -o -x
+./cow_boy -u -o -x -m
+./cow_boy -u -o -d daos -c mappers -k models -j create_table
+
+```
+### generate model files from sql
+
+```
+./cow_boy -u
+```
+cow_boy will scan all *.sql files. and parse all ```create table(...)...; ```sqls,  and generate model file.
+
+
+### define models
+
+```
 //@Models
 #pragma once
 #include <string>
@@ -190,7 +233,7 @@ class customer_dao: public customer_mapper
 public:
     customer_dao(acl::db_handle& handle);
 
-	//@Insert{insert into customer(address,postcode,sex,cname) values (:address,:postcode,:sex,:cname)}
+    //@Insert{insert into customer(address,postcode,sex,cname) values (:address,:postcode,:sex,:cname)}
 	virtual bool insert(const customer_t &obj) ;
 
 	//@Delete{delete from customer where id=:id}
