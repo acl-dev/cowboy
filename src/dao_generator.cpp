@@ -635,34 +635,30 @@ namespace acl
 
         reset_lexer();
         reset_status();
-
-        if (!file_.open_read(file_path.c_str()))
-        {
-            printf("open file error %s\n", acl::last_serror());
-            return false;
-        }
-        file_path_ = file_path;
-        token t = get_next_token();
-        if (t.type_ == token::e_comment)
-        {
-            t = get_next_token();
-            if (t.type_ == token::e_$models)
-            {
-                model_files_.insert(file_path);
-                return parse_model_file();
-            }
-            else
-            {
-                mapper_files_.insert(file_path);
-                return parse_mapper_file();
-            }
-        }
-        return false;
-
-
         try
         {
-            
+            if (!file_.open_read(file_path.c_str()))
+            {
+                printf("open file error %s\n", acl::last_serror());
+                return false;
+            }
+            file_path_ = file_path;
+            token t = get_next_token();
+            if (t.type_ == token::e_comment)
+            {
+                t = get_next_token();
+                if (t.type_ == token::e_$models)
+                {
+                    model_files_.insert(file_path);
+                    return parse_model_file();
+                }
+                else
+                {
+                    mapper_files_.insert(file_path);
+                    return parse_mapper_file();
+                }
+            }
+            return false;
         }
         catch (std::exception &e)
         {
