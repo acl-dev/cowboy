@@ -41,7 +41,6 @@ int main(int argc, char *argv[])
     std::string create_table_path("./");
 
     bool mutilfile = false;
-    bool print = false;
     bool o = false;
     bool u = false;
     bool x = false;
@@ -81,9 +80,6 @@ int main(int argc, char *argv[])
                 break;
             case 'm':
                 mutilfile = true;
-                break;
-            case 'p':
-                print = true;
                 break;
             case 'h':
                 usage(argv[0]);
@@ -145,11 +141,6 @@ int main(int argc, char *argv[])
             printf("parse_file error,exit()\n");
             return -1;
         }
-        if (print)
-        {
-            gen.print_entries();
-        }
-
         if (mutilfile)
         {
             gen.gen_code_multi_files(dao_path);
@@ -165,11 +156,6 @@ int main(int argc, char *argv[])
         {
             printf("gen code error:%s", e.what());
             return -1;
-        }
-
-        if (print)
-        {
-            gen.print_mappers();
         }
     }
     return 0;

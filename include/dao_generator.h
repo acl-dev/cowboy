@@ -21,15 +21,15 @@ namespace acl
             }
             int line_;
             std::string str_;
-            enum
+            typedef enum type_t
             {
                 e_null,             // null type
                 e_less,             // <
                 e_greate,           // >
                 e_open_paren,       // (
                 e_close_paren,      // )
-                e_open_curly_brace, // {
-                e_close_curly_brace,// }
+                e_open_brace,       // {
+                e_close_brace,      // }
                 e_equal,            // =
                 e_double_equal,     // ==
                 e_colon,            // :
@@ -59,14 +59,14 @@ namespace acl
 
                 e_int,
                 e_unsigned_int,     // int
-                
+
                 e_long_long_int,    // long long int
                 e_unsigned_long_long_int,
 
                 e_bool,             // bool
                 e_float,            // float
                 e_double,           // double
-                
+
                 e_time,             // time_t
                 e_void,             // void
                 e_virtual,          // virtual
@@ -94,13 +94,14 @@ namespace acl
                 e_$mappers,         // @mappers
                 e_$result,          // @Result
                 e_$include,         // @Include
-            }type_;
+            }type_t;
+            type_t type_;
         };
-        struct entry;
+        struct model_t;
         struct field
         {
             field():
-                entry_(NULL)
+                model_(NULL)
             {
             }
             typedef enum
@@ -124,19 +125,15 @@ namespace acl
             } type_t;
 
             type_t type_;
-
             std::string type_str_;
-            //
             std::string name_;
-
             //column name
             std::string column_;
-
             //to_one ,to_many 
-            entry* entry_;
+            model_t* model_;
         };
 
-        struct entry
+        struct model_t
         {
             bool model_;
 
@@ -184,7 +181,7 @@ namespace acl
             bool log_;
         };
 
-        struct mapper
+        struct mapper_t
         {
             std::string name_;
             std::vector<mapper_function> mfuncs_;
@@ -193,23 +190,33 @@ namespace acl
             std::vector<std::string> namespaces_;
         };
 
+        struct lexer_t
+        {
+            int line_num_;
+            long long int file_offset_;
+            token current_token_;
+            std::string token_buf_;
+            std::list<token> tokens_;
+            std::string line_buffer_;
+            std::string current_line_;
+            acl::ifstream *file_;
+            std::string file_path_;
+        };
     public:
         dao_generator();
-        void print_entries();
-        void print_mappers();
         bool parse_path(const std::string &path);
         bool parse_file(const std::string &file_path);
         void gen_code(const std::string &path);
         void gen_code_multi_files(const std::string &path);
     private:
         //token lexer
-        void reset_lexer();
         std::string get_string(char end );
         void store_file_point();
         void reload_file_point();
         token get_next_token();
+        token get_next_token(bool auto_skip_comment);
         token current_token();
-        void push_back_token(token t);
+        void push_back(token t);
 
         std::string next_token(const std::string &delimiters);
         std::string look_ahead(const std::string &delimiters);
@@ -220,27 +227,23 @@ namespace acl
         std::string next_line();
         std::string get_line();
     private:
-
-        void reset_status();
         bool parse_model_file();
-
-        void skip_comment();
         void parse_include();
         std::vector<std::string> get_namespace();
-        void parse_model_struct();
-        void parse_construct_func();
+        void parse_model();
+        void skip_construct_func();
 
         bool parse_mapper_file();
         void parse_mapper_struct();
+        mapper_function::type_t token_to_function_type(const token &t);
 
-        field get_return_field();
         std::vector<field> get_mapper_func_params();
         std::vector<std::string> get_sql_param();
 
-        void update_mapper_function_columns(mapper_function &func);
+        void update_function_columns(mapper_function &func);
         std::vector<mapper_function::result> get_result_columns();
 
-        std::string gen_class_implement(const mapper &m);
+        std::string gen_class_implement(const mapper_t &m);
         std::string gen_query_set_parameters(const mapper_function &func);
         std::string get_assign_code(const field &f, const std::string &str);
 
@@ -252,57 +255,51 @@ namespace acl
         std::string get_define_column(const field &f,
                                       const std::string &prefix = "",
                                       bool br= true);
+        std::string gen_query_code(const mapper_function &func);
+        std::string gen_exec_update_code();
+        
+        std::string gen_exec_select_once_code(const mapper_function &func);
+        std::string gen_exec_select_many_code(const mapper_function &func);
+        std::string gen_exec_select_code(const mapper_function &func);
+
         std::string gen_func_implement(const mapper_function &func);
         std::string get_class_name(const std::string &parent_name);
-        std::string gen_class_declare(const mapper &m);
+        std::string gen_class_declare(const mapper_t &m);
         std::string gen_annotation(const mapper_function &func,
                                    bool tab = true);
         std::string gen_func_impl_name(const std::string &class_name,
                                        const std::string &declare_);
         std::string gen_streq_code()const;
 private:
-        int to_field_type(int type);
-        void print_entry(const entry &entry);
-        void print_mapper(const mapper &mapper);
-        void print_func(const mapper_function &func);
+        field::type_t to_field_type(const token &t);
         std::string get_type(const mapper_function &func);
-
-        void entry_reset();
-        bool check_entry(std::string &name,
+        bool check_model_exist(std::string &name,
                          const std::vector<std::string> &namespaces);
-
         std::vector<field> get_fields(const std::string &name,
                                       const std::vector<std::string> &nss);
+        model_t get_model(const std::string &name, const std::vector<std::string> &nps);
 
-        entry get_entry(const std::string &name,
-                        const std::vector<std::string> &nps);
-
-        std::set<std::string> get_include_files(const std::string &file);
-        std::vector<std::string> 
-            parse_include(const std::vector<std::string> &files);
+        lexer_t *new_lexer(const std::string &file_path);
+        void delete_lexer(lexer_t *lexer);
+        std::vector<std::string> &cur_namespaces();
+        model_t & cur_model();
+        mapper_t &cur_mapper();
     private:
-        long long int file_offset_;
-        int line_num_;
-        std::string token_buf_;
-        std::list<token> tokens_;
-        token current_token_;
+        struct analyzer_t
+        {
+            std::vector<std::string> namespaces_;
+            model_t model_;
+            mapper_t mapper_;
+        };
+        std::vector<analyzer_t> analyzers_;
+        std::vector<lexer_t*> lexers_;
 
-        std::string line_buffer_;
-        std::string current_line_;
+        lexer_t *lexer_;
 
-        acl::ifstream file_;
-        std::string file_path_;
-
-        std::vector<std::string> namespaces_;
-
-        entry entry_;
-        std::vector<entry> entries_;
-
-        mapper mapper_;
-        std::vector<mapper> mappers_;
-
-        std::set<std::string> model_files_;
-        std::set<std::string> mapper_files_;
+        std::vector<model_t > models_;
+        std::vector<mapper_t> mappers_;
+        std::vector<std::string> model_files_;
+        std::vector<std::string> mapper_files_;
         bool use_streq_;
     };
 }

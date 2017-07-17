@@ -894,12 +894,12 @@ namespace acl
         insert += tab + "//@Insert{insert into " + name + "(";
         insert_value += "value(";
         $delete += tab + "//@Delete{delete from " + name 
-            + " where " + pkey + "=:" + pkey + ")}" + br;
+            + " where " + pkey + "=:" + pkey + "}" + br;
 
         select += tab + "//@Select{select * from " + 
-            name + " where " + pkey + "=:" + pkey + ")}" + br;
+            name + " where " + pkey + "=:" + pkey + "}" + br;
 
-        select_all += tab + "//@Select{select * from " + name + ")}" + br;
+        select_all += tab + "//@Select{select * from " + name + "}" + br;
         for (size_t i = 0; i < t.fields_.size(); i++)
         {
             const field &f = t.fields_[i];
