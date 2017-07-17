@@ -1394,14 +1394,7 @@ namespace acl
             code += "@Select{";
         code += func.sql_ + "}";
 
-        if (func.sql_mutil_line_)
-        {
-            code = "/*" + code + "*/";
-        }
-        else
-        {
-            code = "//" + code;
-        }
+        code = "/*" + code + "*/";
         code += br;
         if (tab_)
             code = tab + code;
